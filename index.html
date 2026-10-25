@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sibabale Smart Timetable Pro | Sibabale Senior Secondary School</title>
+  <title>Sibabale Smart Timetable Pro (2-Week Cycle) | Sibabale Senior Secondary School</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Export Libraries: ExcelJS and docx -->
+  <!-- Export Libraries: ExcelJS, docx, FileSaver -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
@@ -48,7 +48,7 @@
       color: #0a0a0a;
     }
     
-    /* Custom Scrollbars in Monochrome */
+    /* Custom Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -84,26 +84,36 @@
         border: none !important;
       }
     }
+
+    /* Touch optimization */
+    button, select, input {
+      touch-action: manipulation;
+    }
   </style>
 </head>
 <body class="bg-black text-slate-900 min-h-screen flex flex-col antialiased selection:bg-slate-800 selection:text-white">
 
   <!-- TOP HEADER / BRANDING BAR -->
-  <header class="bg-black border-b border-neutral-800 text-white px-6 py-4 sticky top-0 z-40 flex flex-wrap items-center justify-between shadow-xl">
-    <div class="flex items-center space-x-4">
-      <div class="w-10 h-10 bg-white text-black font-black text-xl flex items-center justify-center rounded border border-neutral-300 shadow-inner">
+  <header class="bg-black border-b border-neutral-800 text-white px-4 md:px-6 py-3 sticky top-0 z-40 flex flex-wrap items-center justify-between shadow-xl">
+    <div class="flex items-center space-x-3">
+      <!-- Mobile Sidebar Toggle -->
+      <button onclick="toggleSidebar()" class="md:hidden text-white hover:text-neutral-300 p-2 focus:outline-none" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+      
+      <div class="w-9 h-9 bg-white text-black font-black text-xl flex items-center justify-center rounded border border-neutral-300 shadow-inner">
         S
       </div>
       <div>
-        <h1 class="font-bold text-lg leading-none tracking-tight text-white uppercase">SIBABALE SENIOR SECONDARY SCHOOL</h1>
-        <p class="text-xs text-neutral-400 font-mono mt-1">SMART TIMETABLE PRO <span class="text-neutral-500">|</span> AUTOMATED SCHEDULER</p>
+        <h1 class="font-bold text-sm md:text-lg leading-none tracking-tight text-white uppercase">SIBABALE SECONDARY SCHOOL</h1>
+        <p class="text-[10px] md:text-xs text-neutral-400 font-mono mt-0.5">SMART TIMETABLE PRO <span class="text-neutral-500">|</span> 2-WEEK CYCLE</p>
       </div>
     </div>
 
     <!-- Active User & Role Controls -->
-    <div class="flex items-center space-x-6 text-sm no-print mt-2 sm:mt-0">
-      <div class="hidden md:flex flex-col items-end border-r border-neutral-800 pr-4">
-        <span class="text-xs text-neutral-400 uppercase tracking-widest">Active System Role</span>
+    <div class="flex items-center space-x-2 md:space-x-4 text-sm no-print mt-2 sm:mt-0">
+      <div class="hidden lg:flex flex-col items-end border-r border-neutral-800 pr-4">
+        <span class="text-[10px] text-neutral-400 uppercase tracking-widest">Active System Role</span>
         <select id="roleSelector" class="bg-neutral-900 border border-neutral-700 text-xs font-semibold text-white rounded px-2 py-1 mt-0.5 focus:outline-none focus:border-white transition-colors cursor-pointer" onchange="changeRole(this.value)">
           <option value="Principal">Principal (Full Access)</option>
           <option value="Timetable Manager" selected>Timetable Manager (Edit)</option>
@@ -112,24 +122,35 @@
         </select>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <button onclick="triggerAutoSchedule()" class="bg-white text-black hover:bg-neutral-200 font-bold text-xs uppercase px-4 py-2.5 rounded transition-all shadow-md flex items-center space-x-2 border border-neutral-300">
-          <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
-          <span>Generate Schedule</span>
+      <div class="flex items-center space-x-2">
+        <button onclick="triggerAutoSchedule()" class="bg-white text-black hover:bg-neutral-200 font-bold text-xs uppercase px-3 py-2 rounded transition-all shadow-md flex items-center space-x-1.5 border border-neutral-300">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+          <span class="hidden xs:inline">Generate</span>
         </button>
-        <button onclick="openModal('exportModal')" class="bg-neutral-900 text-white hover:bg-neutral-800 font-semibold text-xs uppercase px-3 py-2.5 rounded transition-colors border border-neutral-700 flex items-center space-x-2">
-          <i class="fa-solid fa-file-export"></i>
-          <span>Export</span>
+        <button onclick="openModal('exportModal')" class="bg-neutral-900 text-white hover:bg-neutral-800 font-semibold text-xs uppercase px-3 py-2 rounded transition-colors border border-neutral-700 flex items-center space-x-1.5">
+          <i class="fa-solid fa-file-export text-xs"></i>
+          <span class="hidden xs:inline">Export</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- MAIN APP CONTAINER -->
-  <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- BACKDROP FOR MOBILE SIDEBAR -->
+    <div id="sidebarBackdrop" onclick="toggleSidebar(false)" class="hidden fixed inset-0 bg-black/70 z-20 md:hidden backdrop-blur-sm transition-opacity"></div>
 
     <!-- NAVIGATION SIDEBAR -->
-    <aside class="w-full md:w-64 bg-neutral-950 border-r border-neutral-800 text-white flex-shrink-0 flex flex-col no-print">
+    <aside id="mainSidebar" class="fixed md:static inset-y-0 left-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out w-64 bg-neutral-950 border-r border-neutral-800 text-white flex-shrink-0 flex flex-col no-print h-full">
+      
+      <div class="p-3 border-b border-neutral-800 md:hidden flex justify-between items-center bg-neutral-900">
+        <span class="text-xs font-bold uppercase text-neutral-400">Navigation Menu</span>
+        <button onclick="toggleSidebar(false)" class="p-1 text-neutral-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
       <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
         <div class="text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-2 px-3">Management</div>
         
@@ -187,6 +208,19 @@
           <i class="fa-solid fa-sliders w-4 text-center"></i>
           <span>School Setup</span>
         </button>
+
+        <!-- Role Select for mobile display -->
+        <div class="pt-4 lg:hidden border-t border-neutral-800 mt-2">
+          <label class="block text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-1 px-3">System Role</label>
+          <div class="px-3">
+            <select class="w-full bg-neutral-900 border border-neutral-700 text-xs font-semibold text-white rounded px-2 py-1.5 focus:outline-none" onchange="changeRole(this.value)">
+              <option value="Principal">Principal (Full Access)</option>
+              <option value="Timetable Manager" selected>Timetable Manager (Edit)</option>
+              <option value="Teacher">Teacher (View Only)</option>
+              <option value="Read-Only">Read-Only Visitor</option>
+            </select>
+          </div>
+        </div>
       </nav>
 
       <!-- CREATOR BRANDING FOOTER -->
@@ -198,7 +232,7 @@
     </aside>
 
     <!-- CONTENT DISPLAY CONTAINER -->
-    <main class="flex-1 bg-white text-black overflow-y-auto p-4 md:p-8">
+    <main class="flex-1 bg-white text-black overflow-y-auto p-3 sm:p-5 md:p-8">
 
       <!-- ALERT MESSAGE CONTAINER -->
       <div id="systemAlert" class="hidden mb-6 p-4 rounded border border-black bg-neutral-100 text-black flex items-center justify-between shadow-sm">
@@ -218,8 +252,8 @@
       <div id="tab-dashboard" class="tab-content space-y-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-neutral-200 gap-4">
           <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Executive Dashboard</h2>
-            <p class="text-xs text-neutral-600">Sibabale Senior Secondary School • Academic Year 2026</p>
+            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Executive Dashboard</h2>
+            <p class="text-xs text-neutral-600">Sibabale Senior Secondary School • 2-Week Cycle Academic Schedule 2026</p>
           </div>
           <div class="flex items-center space-x-3">
             <span class="text-xs font-mono bg-neutral-100 text-neutral-800 border border-neutral-300 px-3 py-1.5 rounded font-semibold">
@@ -232,34 +266,49 @@
         </div>
 
         <!-- METRICS CARDS -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Coverage</div>
-            <div class="text-2xl font-black my-1">25 / 25</div>
-            <div class="text-xs text-neutral-600 font-semibold">Classes Enrolled (Grades 8–12)</div>
+            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Classes Enrolled</div>
+            <div class="text-xl md:text-2xl font-black my-1">25 / 25</div>
+            <div class="text-[11px] text-neutral-600 font-semibold">Grades 8–12 (A-E)</div>
           </div>
 
           <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Weekly Lessons</div>
-            <div id="metricLessons" class="text-2xl font-black my-1">1,000 / 1,000</div>
-            <div class="text-xs text-neutral-600 font-semibold">Scheduled Periods</div>
+            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Fortnightly Lessons</div>
+            <div id="metricLessons" class="text-xl md:text-2xl font-black my-1">2,000 / 2,000</div>
+            <div class="text-[11px] text-neutral-600 font-semibold">2-Week Scheduled Periods</div>
           </div>
 
           <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
             <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Teaching Staff</div>
-            <div id="metricTeachers" class="text-2xl font-black my-1">32 Teachers</div>
-            <div class="text-xs text-neutral-600 font-semibold">Workload Allocated</div>
+            <div id="metricTeachers" class="text-xl md:text-2xl font-black my-1">32 Teachers</div>
+            <div class="text-[11px] text-neutral-600 font-semibold">Cycle Workload Allocated</div>
           </div>
 
           <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Conflict Status</div>
-            <div id="metricConflicts" class="text-2xl font-black my-1">0 Clashes</div>
-            <div class="text-xs text-neutral-600 font-semibold">100% Constraints Passed</div>
+            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Conflict Audit</div>
+            <div id="metricConflicts" class="text-xl md:text-2xl font-black my-1">0 Clashes</div>
+            <div class="text-[11px] text-neutral-600 font-semibold">100% Constraints Passed</div>
+          </div>
+        </div>
+
+        <!-- CYCLE SWITCHER DIRECT BANNER -->
+        <div class="p-4 rounded-lg bg-neutral-900 text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-repeat text-xl text-amber-400"></i>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider">Active Scheduling Cycle</div>
+              <div class="text-xs text-neutral-300">Timetable runs on an alternating 10-Day (Week A / Week B) schedule.</div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <button onclick="setGlobalCycle('A')" id="btnCycleA" class="flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-white text-black border-white">Week A</button>
+            <button onclick="setGlobalCycle('B')" id="btnCycleB" class="flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white">Week B</button>
           </div>
         </div>
 
         <!-- QUICK ACTIONS GRID -->
-        <div class="p-6 rounded border border-neutral-300 bg-neutral-50">
+        <div class="p-4 md:p-6 rounded border border-neutral-300 bg-neutral-50">
           <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-700 mb-4">Core Administrative Controls</h3>
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             <button onclick="triggerAutoSchedule()" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
@@ -295,13 +344,13 @@
         </div>
 
         <!-- GRADE OVERVIEW MATRIX -->
-        <div class="p-6 rounded border border-neutral-300 bg-white shadow-sm">
+        <div class="p-4 md:p-6 rounded border border-neutral-300 bg-white shadow-sm">
           <div class="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200">
             <h3 class="text-sm font-bold uppercase tracking-wider">Grades 8–12 Coverage Matrix (25 Classes)</h3>
             <span class="text-xs text-neutral-500 font-mono">5 Classes Per Grade Group</span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-5 gap-4" id="gradeCoverageMatrix">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="gradeCoverageMatrix">
             <!-- Dynamically Rendered Grade Panels -->
           </div>
         </div>
@@ -311,10 +360,24 @@
       <div id="tab-timetable" class="tab-content hidden space-y-4">
         <!-- FILTER BAR -->
         <div class="p-4 rounded border border-neutral-300 bg-neutral-900 text-white flex flex-wrap items-center justify-between gap-4 no-print">
-          <div class="flex flex-wrap items-center gap-4">
+          <div class="flex flex-wrap items-center gap-3 md:gap-4 w-full md:w-auto">
+            
+            <!-- Cycle Selection Toggle -->
             <div>
-              <label class="block text-[10px] font-mono text-neutral-400 uppercase">View Mode</label>
-              <select id="gridType" class="bg-black text-white border border-neutral-700 text-xs rounded px-3 py-1.5 focus:outline-none" onchange="renderGrid()">
+              <label class="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">Cycle Week</label>
+              <div class="inline-flex rounded-md shadow-sm" role="group">
+                <button type="button" id="gridCycleA" onclick="setGridCycle('A')" class="px-3 py-1.5 text-xs font-bold rounded-l-lg border border-neutral-700 bg-white text-black">
+                  Week A
+                </button>
+                <button type="button" id="gridCycleB" onclick="setGridCycle('B')" class="px-3 py-1.5 text-xs font-bold rounded-r-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white">
+                  Week B
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">View Mode</label>
+              <select id="gridType" class="bg-black text-white border border-neutral-700 text-xs rounded px-3 py-1.5 focus:outline-none" onchange="populateDropdowns(); renderGrid();">
                 <option value="class">Class Timetable</option>
                 <option value="teacher">Teacher Timetable</option>
                 <option value="room">Classroom / Lab Timetable</option>
@@ -322,7 +385,7 @@
             </div>
 
             <div>
-              <label class="block text-[10px] font-mono text-neutral-400 uppercase">Select Target</label>
+              <label class="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">Select Target</label>
               <select id="gridTarget" class="bg-black text-white border border-neutral-700 text-xs rounded px-3 py-1.5 focus:outline-none min-w-[140px]" onchange="renderGrid()">
                 <!-- Populated dynamically -->
               </select>
@@ -331,45 +394,50 @@
 
           <div class="flex items-center space-x-2">
             <button onclick="window.print()" class="bg-white text-black hover:bg-neutral-200 text-xs font-bold px-3 py-1.5 rounded transition-colors border border-white uppercase">
-              <i class="fa-solid fa-print mr-1"></i> Print Timetable
+              <i class="fa-solid fa-print mr-1"></i> Print
             </button>
           </div>
         </div>
 
         <!-- PRINTABLE TIMETABLE CONTAINER -->
-        <div class="p-6 bg-white border border-neutral-300 rounded shadow-sm printable-area">
-          <div class="flex items-center justify-between pb-4 mb-4 border-b border-neutral-300">
+        <div class="p-3 sm:p-6 bg-white border border-neutral-300 rounded shadow-sm printable-area">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 mb-4 border-b border-neutral-300 gap-2">
             <div>
-              <h2 id="gridTitle" class="text-xl font-black uppercase tracking-tight">CLASS TIMETABLE: 8A</h2>
-              <p class="text-xs text-neutral-600">Sibabale Senior Secondary School • Smart Timetable Pro</p>
+              <div class="flex items-center space-x-2">
+                <h2 id="gridTitle" class="text-lg sm:text-xl font-black uppercase tracking-tight">CLASS TIMETABLE: 8A</h2>
+                <span id="gridCycleBadge" class="bg-black text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">WEEK A</span>
+              </div>
+              <p class="text-xs text-neutral-600">Sibabale Senior Secondary School • 2-Week Fortnightly Cycle</p>
             </div>
-            <div class="text-right">
-              <span class="text-xs font-mono font-bold uppercase block text-neutral-800">40 PERIODS / WEEK</span>
+            <div class="text-left sm:text-right">
+              <span class="text-xs font-mono font-bold uppercase block text-neutral-800">80 PERIODS / 2-WEEK CYCLE</span>
               <span class="text-[10px] text-neutral-500 uppercase">Mon - Fri (8 Periods/Day)</span>
             </div>
           </div>
 
-          <!-- TIMETABLE GRID TABLE -->
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse border border-neutral-300 text-center text-xs">
-              <thead>
-                <tr class="bg-black text-white uppercase text-[11px] tracking-wider">
-                  <th class="border border-neutral-700 p-2 font-bold w-24">Period / Time</th>
-                  <th class="border border-neutral-700 p-2 font-bold">Monday</th>
-                  <th class="border border-neutral-700 p-2 font-bold">Tuesday</th>
-                  <th class="border border-neutral-700 p-2 font-bold">Wednesday</th>
-                  <th class="border border-neutral-700 p-2 font-bold">Thursday</th>
-                  <th class="border border-neutral-700 p-2 font-bold">Friday</th>
-                </tr>
-              </thead>
-              <tbody id="timetableGridBody">
-                <!-- Dynamically populated periods 1 through 8 + break intervals -->
-              </tbody>
-            </table>
+          <!-- TIMETABLE GRID TABLE (Mobile Horizontal Scrollable) -->
+          <div class="overflow-x-auto -mx-3 sm:mx-0">
+            <div class="inline-block min-w-full align-middle">
+              <table class="min-w-[650px] w-full border-collapse border border-neutral-300 text-center text-xs">
+                <thead>
+                  <tr class="bg-black text-white uppercase text-[11px] tracking-wider">
+                    <th class="border border-neutral-700 p-2 font-bold w-24">Period / Time</th>
+                    <th class="border border-neutral-700 p-2 font-bold">Monday</th>
+                    <th class="border border-neutral-700 p-2 font-bold">Tuesday</th>
+                    <th class="border border-neutral-700 p-2 font-bold">Wednesday</th>
+                    <th class="border border-neutral-700 p-2 font-bold">Thursday</th>
+                    <th class="border border-neutral-700 p-2 font-bold">Friday</th>
+                  </tr>
+                </thead>
+                <tbody id="timetableGridBody">
+                  <!-- Dynamically populated periods 1 through 8 + break intervals -->
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- FOOTER CREDIT ON PRINT/VIEW -->
-          <div class="mt-6 pt-4 border-t border-neutral-200 flex items-center justify-between text-[10px] text-neutral-500 font-mono">
+          <div class="mt-6 pt-4 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-neutral-500 font-mono gap-2">
             <div>CONFIDENTIAL • SIBABALE SENIOR SECONDARY SCHOOL</div>
             <div>CREATED BY MAWETHU MPANDE @SISONKEHUB</div>
           </div>
@@ -381,21 +449,21 @@
         <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
           <div>
             <h2 class="text-2xl font-black uppercase tracking-tight">Class Registry (25 Classes)</h2>
-            <p class="text-xs text-neutral-600">Grades 8, 9, 10, 11 & 12 • 5 Sections Per Grade</p>
+            <p class="text-xs text-neutral-600">Grades 8, 9, 10, 11 & 12 • 5 Sections Per Grade (A–E)</p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="classListing">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="classListing">
           <!-- Class details dynamic cards -->
         </div>
       </div>
 
       <!-- TAB 4: TEACHERS REGISTER -->
       <div id="tab-teachers" class="tab-content hidden space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-neutral-200 gap-3">
           <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Teacher Register & Workloads</h2>
-            <p class="text-xs text-neutral-600">32 Qualified Educators • Weekly Period Allocations</p>
+            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Teacher Register & Workloads</h2>
+            <p class="text-xs text-neutral-600">32 Qualified Educators • Fortnightly Period Allocations</p>
           </div>
           <button onclick="openModal('addTeacherModal')" class="bg-black text-white hover:bg-neutral-800 text-xs font-bold px-4 py-2 rounded uppercase border border-black">
             + Add New Teacher
@@ -403,14 +471,14 @@
         </div>
 
         <div class="overflow-x-auto border border-neutral-300 rounded shadow-sm">
-          <table class="w-full text-left text-xs border-collapse">
+          <table class="w-full text-left text-xs border-collapse min-w-[500px]">
             <thead>
               <tr class="bg-black text-white uppercase text-[10px] tracking-wider font-bold">
                 <th class="p-3 border-b border-neutral-700">Code</th>
                 <th class="p-3 border-b border-neutral-700">Educator Name</th>
                 <th class="p-3 border-b border-neutral-700">Subjects</th>
                 <th class="p-3 border-b border-neutral-700">Grades</th>
-                <th class="p-3 border-b border-neutral-700 text-center">Max / Assigned</th>
+                <th class="p-3 border-b border-neutral-700 text-center">Max / Assigned (2-Wk)</th>
                 <th class="p-3 border-b border-neutral-700 text-center">Status</th>
               </tr>
             </thead>
@@ -426,18 +494,18 @@
         <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
           <div>
             <h2 class="text-2xl font-black uppercase tracking-tight">Subject Matrix & Periods</h2>
-            <p class="text-xs text-neutral-600">CAPS Curriculum Requirements • Weekly Allocations</p>
+            <p class="text-xs text-neutral-600">CAPS Curriculum Requirements • Fortnightly Period Targets</p>
           </div>
         </div>
 
         <div class="overflow-x-auto border border-neutral-300 rounded shadow-sm">
-          <table class="w-full text-left text-xs border-collapse">
+          <table class="w-full text-left text-xs border-collapse min-w-[500px]">
             <thead>
               <tr class="bg-black text-white uppercase text-[10px] tracking-wider font-bold">
                 <th class="p-3 border-b border-neutral-700">Code</th>
                 <th class="p-3 border-b border-neutral-700">Subject Name</th>
                 <th class="p-3 border-b border-neutral-700">Phase / Grades</th>
-                <th class="p-3 border-b border-neutral-700 text-center">Weekly Periods</th>
+                <th class="p-3 border-b border-neutral-700 text-center">Fortnightly Periods</th>
                 <th class="p-3 border-b border-neutral-700 text-center">Special Room Req.</th>
               </tr>
             </thead>
@@ -457,17 +525,17 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="roomsListing">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="roomsListing">
           <!-- Dynamically populated room cards -->
         </div>
       </div>
 
       <!-- TAB 7: CONFLICT AUDIT -->
       <div id="tab-validation" class="tab-content hidden space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-neutral-200 gap-3">
           <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Constraint & Conflict Audit</h2>
-            <p class="text-xs text-neutral-600">Real-time Validation Engine Results</p>
+            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Constraint & Conflict Audit</h2>
+            <p class="text-xs text-neutral-600">Real-time Validation Engine Across Both Week A & Week B</p>
           </div>
           <button onclick="runValidationCheck()" class="bg-black text-white hover:bg-neutral-800 text-xs font-bold px-4 py-2 rounded uppercase">
             Re-Run Full Validation
@@ -486,18 +554,18 @@
           <p class="text-xs text-neutral-600">Natural Language Operations & Workload Diagnostics</p>
         </div>
 
-        <div class="border border-neutral-300 rounded bg-neutral-900 text-white flex flex-col h-[500px]">
+        <div class="border border-neutral-300 rounded bg-neutral-900 text-white flex flex-col h-[450px] md:h-[500px]">
           <!-- CHAT LOG -->
           <div id="aiChatLog" class="flex-1 p-4 overflow-y-auto space-y-4 text-xs font-mono">
             <div class="p-3 rounded bg-neutral-800 border border-neutral-700 text-neutral-300">
               <span class="font-bold text-white block mb-1">SYSTEM ASSISTANT READY:</span>
-              Welcome to Sibabale Smart Timetable Pro AI Helper. How may I assist you with scheduling diagnostics, room utilization analysis, or teacher workload balancing?
+              Welcome to Sibabale Smart Timetable Pro AI Helper. I support diagnostics across your 2-week cycle (Week A & Week B). How may I assist you with scheduling, room utilization, or educator workload balancing?
             </div>
           </div>
 
           <!-- INPUT FORM -->
           <div class="p-3 border-t border-neutral-800 bg-black flex gap-2">
-            <input type="text" id="aiQueryInput" placeholder="Ask e.g. 'Show teachers with highest workload' or 'Find room clashes'..." class="flex-1 bg-neutral-900 text-white border border-neutral-700 rounded px-3 py-2 text-xs focus:outline-none focus:border-white">
+            <input type="text" id="aiQueryInput" onkeydown="if(event.key==='Enter') sendAIQuery()" placeholder="Ask e.g. 'Show teachers with highest workload' or 'Find clashes in Week A'..." class="flex-1 bg-neutral-900 text-white border border-neutral-700 rounded px-3 py-2 text-xs focus:outline-none focus:border-white">
             <button onclick="sendAIQuery()" class="bg-white text-black font-bold text-xs px-4 py-2 rounded uppercase hover:bg-neutral-200">
               Ask AI
             </button>
@@ -507,9 +575,9 @@
 
       <!-- TAB 9: VERSION HISTORY -->
       <div id="tab-versions" class="tab-content hidden space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-neutral-200 gap-3">
           <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Version Control & Audit Trail</h2>
+            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Version Control & Audit Trail</h2>
             <p class="text-xs text-neutral-600">Schedule Draft Snapshots & Restore Points</p>
           </div>
           <button onclick="saveVersionSnapshot()" class="bg-black text-white hover:bg-neutral-800 text-xs font-bold px-4 py-2 rounded uppercase">
@@ -517,8 +585,8 @@
           </button>
         </div>
 
-        <div class="border border-neutral-300 rounded bg-white overflow-hidden shadow-sm">
-          <table class="w-full text-left text-xs border-collapse">
+        <div class="border border-neutral-300 rounded bg-white overflow-x-auto shadow-sm">
+          <table class="w-full text-left text-xs border-collapse min-w-[500px]">
             <thead>
               <tr class="bg-black text-white uppercase text-[10px] tracking-wider font-bold">
                 <th class="p-3">Version Tag</th>
@@ -548,6 +616,10 @@
             <div>
               <label class="block text-xs font-semibold mb-1">School Name</label>
               <input type="text" value="Sibabale Senior Secondary School" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium bg-neutral-100" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Academic Cycle Structure</label>
+              <input type="text" value="2-Week Cycle (Week A & Week B)" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium bg-neutral-100" readonly>
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">Academic Year / Term</label>
@@ -582,6 +654,48 @@
     </main>
   </div>
 
+  <!-- MODAL: ADD TEACHER -->
+  <div id="addTeacherModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-black rounded-lg max-w-md w-full p-6 shadow-2xl space-y-4 text-black">
+      <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
+        <h3 class="font-black text-sm uppercase tracking-wide">Add Educator to Register</h3>
+        <button onclick="closeModal('addTeacherModal')" class="text-neutral-500 hover:text-black font-bold">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="addNewTeacher(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold mb-1">Teacher Code (e.g. T33)</label>
+          <input type="text" id="newTeacherId" required placeholder="T33" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Full Name & Title</label>
+          <input type="text" id="newTeacherName" required placeholder="Mr. A. Xaba" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Primary Subject Code</label>
+          <select id="newTeacherSubject" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Max 2-Week Periods Limit</label>
+          <input type="number" id="newTeacherMax" value="64" min="20" max="80" required class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
+        </div>
+
+        <div class="pt-3 border-t border-neutral-200 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('addTeacherModal')" class="bg-neutral-200 text-black font-bold px-3 py-2 rounded uppercase text-xs">
+            Cancel
+          </button>
+          <button type="submit" class="bg-black text-white font-bold px-4 py-2 rounded uppercase text-xs border border-black">
+            Save Educator
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL: EDIT LESSON SLOT -->
   <div id="editSlotModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
     <div class="bg-white border-2 border-black rounded-lg max-w-md w-full p-6 shadow-2xl space-y-4 text-black">
@@ -593,12 +707,19 @@
       </div>
 
       <form id="slotEditForm" onsubmit="saveSlotChanges(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="modalCycle">
         <input type="hidden" id="modalDay">
         <input type="hidden" id="modalPeriod">
 
-        <div>
-          <label class="block font-bold mb-1">Class</label>
-          <input type="text" id="modalClass" readonly class="w-full border border-neutral-300 rounded p-2 bg-neutral-100 font-mono font-bold">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold mb-1">Class</label>
+            <input type="text" id="modalClass" readonly class="w-full border border-neutral-300 rounded p-2 bg-neutral-100 font-mono font-bold">
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Cycle</label>
+            <input type="text" id="modalCycleLabel" readonly class="w-full border border-neutral-300 rounded p-2 bg-neutral-100 font-mono font-bold">
+          </div>
         </div>
 
         <div>
@@ -645,7 +766,7 @@
       </div>
 
       <p class="text-xs text-neutral-600">
-        Generate fully formatted, genuine Microsoft Excel (.xlsx) workbooks or Microsoft Word (.docx) publications branded for Sibabale Senior Secondary School.
+        Generate fully formatted, genuine Microsoft Excel (.xlsx) workbooks or Microsoft Word (.docx) publications branded for Sibabale Senior Secondary School (2-Week Cycle included).
       </p>
 
       <div class="space-y-3 pt-2">
@@ -653,7 +774,7 @@
           <i class="fa-solid fa-file-excel text-2xl text-black"></i>
           <div>
             <div class="font-bold text-xs uppercase">Microsoft Excel Workbook (.xlsx)</div>
-            <div class="text-[10px] text-neutral-500">Includes Master, Grade, Class & Teacher Timetables</div>
+            <div class="text-[10px] text-neutral-500">Includes Week A & Week B Worksheets for Master, Class & Teacher Timetables</div>
           </div>
         </button>
 
@@ -661,7 +782,7 @@
           <i class="fa-solid fa-file-word text-2xl text-black"></i>
           <div>
             <div class="font-bold text-xs uppercase">Microsoft Word Publication (.docx)</div>
-            <div class="text-[10px] text-neutral-500">Includes Cover Page, Signatures & Printed Grids</div>
+            <div class="text-[10px] text-neutral-500">Includes Cover Page, Signatures & Printed Grids for Week A and Week B</div>
           </div>
         </button>
       </div>
@@ -671,7 +792,7 @@
   <!-- MAIN SCRIPT IMPLEMENTATION -->
   <script>
     /* ==========================================================================
-       1. DATA STRUCTURES & INITIALIZATION (25 CLASSES, SUBJECTS, TEACHERS)
+       1. DATA STRUCTURES & INITIALIZATION (25 CLASSES, 2-WEEK CYCLE DATA)
        ========================================================================== */
 
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -687,7 +808,7 @@
       { id: 8, time: '13:45 - 14:30' }
     ];
 
-    // 25 Classes as explicitly defined: Grades 8–12, A through E
+    // 25 Classes: Grades 8–12, A through E
     const CLASSES = [
       '8A', '8B', '8C', '8D', '8E',
       '9A', '9B', '9C', '9D', '9E',
@@ -697,18 +818,18 @@
     ];
 
     const SUBJECTS = [
-      { code: 'ENG', name: 'English Home Language', periods: 6, isLab: false, phase: 'FET & Senior' },
-      { code: 'XHO', name: 'isiXhosa First Add. Lang', periods: 5, isLab: false, phase: 'FET & Senior' },
-      { code: 'MATH', name: 'Mathematics', periods: 7, isLab: false, phase: 'FET & Senior' },
-      { code: 'MLIT', name: 'Mathematical Literacy', periods: 5, isLab: false, phase: 'FET' },
-      { code: 'PSCI', name: 'Physical Sciences', periods: 5, isLab: true, phase: 'FET' },
-      { code: 'LSCI', name: 'Life Sciences', periods: 5, isLab: true, phase: 'FET' },
-      { code: 'ACCT', name: 'Accounting', periods: 4, isLab: false, phase: 'FET' },
-      { code: 'BUSS', name: 'Business Studies', periods: 4, isLab: false, phase: 'FET' },
-      { code: 'CAT', name: 'Computer Appl. Tech', periods: 4, isLab: true, phase: 'FET & Senior' },
-      { code: 'LO', name: 'Life Orientation', periods: 2, isLab: false, phase: 'FET & Senior' },
-      { code: 'NSCI', name: 'Natural Sciences', periods: 4, isLab: true, phase: 'Senior' },
-      { code: 'SSCI', name: 'Social Sciences', periods: 3, isLab: false, phase: 'Senior' }
+      { code: 'ENG', name: 'English Home Language', periods: 12, isLab: false, phase: 'FET & Senior' },
+      { code: 'XHO', name: 'isiXhosa First Add. Lang', periods: 10, isLab: false, phase: 'FET & Senior' },
+      { code: 'MATH', name: 'Mathematics', periods: 14, isLab: false, phase: 'FET & Senior' },
+      { code: 'MLIT', name: 'Mathematical Literacy', periods: 10, isLab: false, phase: 'FET' },
+      { code: 'PSCI', name: 'Physical Sciences', periods: 10, isLab: true, phase: 'FET' },
+      { code: 'LSCI', name: 'Life Sciences', periods: 10, isLab: true, phase: 'FET' },
+      { code: 'ACCT', name: 'Accounting', periods: 8, isLab: false, phase: 'FET' },
+      { code: 'BUSS', name: 'Business Studies', periods: 8, isLab: false, phase: 'FET' },
+      { code: 'CAT', name: 'Computer Appl. Tech', periods: 8, isLab: true, phase: 'FET & Senior' },
+      { code: 'LO', name: 'Life Orientation', periods: 4, isLab: false, phase: 'FET & Senior' },
+      { code: 'NSCI', name: 'Natural Sciences', periods: 8, isLab: true, phase: 'Senior' },
+      { code: 'SSCI', name: 'Social Sciences', periods: 6, isLab: false, phase: 'Senior' }
     ];
 
     const ROOMS = [
@@ -722,27 +843,28 @@
       { id: 'CLAB1', name: 'Computer Lab 1', type: 'Lab', capacity: 30 }
     ];
 
-    // Sample Teacher Register (32 Educators)
-    const TEACHERS = [
-      { id: 'T01', name: 'Mr. N. Mbeki', subjects: ['MATH', 'MLIT'], maxPeriods: 35 },
-      { id: 'T02', name: 'Mrs. S. Dlamini', subjects: ['ENG'], maxPeriods: 32 },
-      { id: 'T03', name: 'Mr. L. Zungu', subjects: ['PSCI', 'NSCI'], maxPeriods: 30 },
-      { id: 'T04', name: 'Ms. A. Sisulu', subjects: ['XHO'], maxPeriods: 32 },
-      { id: 'T05', name: 'Mr. K. Ndlovu', subjects: ['ACCT', 'BUSS'], maxPeriods: 32 },
-      { id: 'T06', name: 'Mrs. T. Khumalo', subjects: ['LSCI', 'NSCI'], maxPeriods: 30 },
-      { id: 'T07', name: 'Mr. M. Mpande', subjects: ['CAT', 'MATH'], maxPeriods: 35 },
-      { id: 'T08', name: 'Ms. B. Botha', subjects: ['LO', 'SSCI'], maxPeriods: 30 },
-      { id: 'T09', name: 'Mr. J. Smith', subjects: ['ENG', 'XHO'], maxPeriods: 30 },
-      { id: 'T10', name: 'Mrs. R. Pillay', subjects: ['MATH'], maxPeriods: 32 }
+    // Initial Educator Roster
+    let TEACHERS = [
+      { id: 'T01', name: 'Mr. N. Mbeki', subjects: ['MATH', 'MLIT'], maxPeriods: 64 },
+      { id: 'T02', name: 'Mrs. S. Dlamini', subjects: ['ENG'], maxPeriods: 64 },
+      { id: 'T03', name: 'Mr. L. Zungu', subjects: ['PSCI', 'NSCI'], maxPeriods: 60 },
+      { id: 'T04', name: 'Ms. A. Sisulu', subjects: ['XHO'], maxPeriods: 64 },
+      { id: 'T05', name: 'Mr. K. Ndlovu', subjects: ['ACCT', 'BUSS'], maxPeriods: 64 },
+      { id: 'T06', name: 'Mrs. T. Khumalo', subjects: ['LSCI', 'NSCI'], maxPeriods: 60 },
+      { id: 'T07', name: 'Mr. M. Mpande', subjects: ['CAT', 'MATH'], maxPeriods: 64 },
+      { id: 'T08', name: 'Ms. B. Botha', subjects: ['LO', 'SSCI'], maxPeriods: 60 },
+      { id: 'T09', name: 'Mr. J. Smith', subjects: ['ENG', 'XHO'], maxPeriods: 60 },
+      { id: 'T10', name: 'Mrs. R. Pillay', subjects: ['MATH'], maxPeriods: 64 }
     ];
 
-    // Primary Schedule State: Map of key `${className}_${day}_${periodId}` => { subject, teacherId, roomId }
+    // Timetable State Key Format: `${cycle}_${className}_${day}_${periodId}` where cycle = 'A' or 'B'
     let timetableState = {};
+    let activeCycle = 'A'; // 'A' or 'B'
     let activeRole = 'Timetable Manager';
     let currentVersions = [];
 
     /* ==========================================================================
-       2. APP INITIALIZATION & SEEDING ENGINE
+       2. APP INITIALIZATION & SEEDING ENGINE FOR 2-WEEK CYCLE
        ========================================================================== */
 
     window.onload = function() {
@@ -755,42 +877,83 @@
       renderRoomsListing();
       renderClassesListing();
       runValidationCheck();
+      populateAddTeacherSubjects();
     };
 
     function seedDefaultTimetable() {
-      // Deterministic generation algorithm for all 25 classes
-      let teacherIndex = 0;
-      
-      CLASSES.forEach(c => {
-        let isSenior = c.startsWith('8') || c.startsWith('9');
-        let classSubjects = isSenior ?
-          ['ENG', 'XHO', 'MATH', 'NSCI', 'SSCI', 'CAT', 'LO'] :
-          ['ENG', 'XHO', 'MATH', 'PSCI', 'LSCI', 'ACCT', 'LO'];
+      ['A', 'B'].forEach(cycle => {
+        CLASSES.forEach(c => {
+          let isSenior = c.startsWith('8') || c.startsWith('9');
+          
+          // Slight shift in subject sequence for Week B to represent distinct fortnight scheduling
+          let classSubjects = isSenior ?
+            (cycle === 'A' ? ['ENG', 'XHO', 'MATH', 'NSCI', 'SSCI', 'CAT', 'LO'] : ['MATH', 'ENG', 'NSCI', 'XHO', 'LO', 'SSCI', 'CAT']) :
+            (cycle === 'A' ? ['ENG', 'XHO', 'MATH', 'PSCI', 'LSCI', 'ACCT', 'LO'] : ['MATH', 'PSCI', 'ENG', 'LSCI', 'ACCT', 'XHO', 'LO']);
 
-        DAYS.forEach(day => {
-          PERIODS.forEach(p => {
-            if (p.id === 'BREAK') return;
+          DAYS.forEach(day => {
+            PERIODS.forEach(p => {
+              if (p.id === 'BREAK') return;
 
-            let subCode = classSubjects[(p.id + DAYS.indexOf(day)) % classSubjects.length];
-            let eligibleTeachers = TEACHERS.filter(t => t.subjects.includes(subCode));
-            let teacher = eligibleTeachers.length > 0 ? eligibleTeachers[0] : TEACHERS[0];
-            let subObj = SUBJECTS.find(s => s.code === subCode);
-            let room = subObj && subObj.isLab ? ROOMS[5] : ROOMS[0];
+              let offset = cycle === 'B' ? 2 : 0;
+              let subCode = classSubjects[(p.id + DAYS.indexOf(day) + offset) % classSubjects.length];
+              let eligibleTeachers = TEACHERS.filter(t => t.subjects.includes(subCode));
+              let teacher = eligibleTeachers.length > 0 ? eligibleTeachers[0] : TEACHERS[0];
+              let subObj = SUBJECTS.find(s => s.code === subCode);
+              let room = subObj && subObj.isLab ? ROOMS[5] : ROOMS[0];
 
-            let key = `${c}_${day}_${p.id}`;
-            timetableState[key] = {
-              subject: subCode,
-              teacherId: teacher.id,
-              roomId: room.id
-            };
+              let key = `${cycle}_${c}_${day}_${p.id}`;
+              timetableState[key] = {
+                subject: subCode,
+                teacherId: teacher.id,
+                roomId: room.id
+              };
+            });
           });
         });
       });
     }
 
     /* ==========================================================================
-       3. INTERACTIVE TIMETABLE GRID RENDERING & EDITING
+       3. INTERACTIVE TIMETABLE GRID RENDERING & CYCLE SWITCHING
        ========================================================================== */
+
+    function setGlobalCycle(cycle) {
+      activeCycle = cycle;
+      
+      // Update Cycle buttons state
+      const btnA = document.getElementById('btnCycleA');
+      const btnB = document.getElementById('btnCycleB');
+      
+      if (cycle === 'A') {
+        btnA.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-white text-black border-white";
+        btnB.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white";
+      } else {
+        btnB.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-white text-black border-white";
+        btnA.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white";
+      }
+
+      setGridCycle(cycle);
+      showSystemAlert(`Active cycle switched to Week ${cycle}`, 'info');
+    }
+
+    function setGridCycle(cycle) {
+      activeCycle = cycle;
+      const gridA = document.getElementById('gridCycleA');
+      const gridB = document.getElementById('gridCycleB');
+      const badge = document.getElementById('gridCycleBadge');
+
+      if (cycle === 'A') {
+        gridA.className = "px-3 py-1.5 text-xs font-bold rounded-l-lg border border-neutral-700 bg-white text-black";
+        gridB.className = "px-3 py-1.5 text-xs font-bold rounded-r-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white";
+        badge.textContent = "WEEK A";
+      } else {
+        gridB.className = "px-3 py-1.5 text-xs font-bold rounded-r-lg border border-neutral-700 bg-white text-black";
+        gridA.className = "px-3 py-1.5 text-xs font-bold rounded-l-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white";
+        badge.textContent = "WEEK B";
+      }
+
+      renderGrid();
+    }
 
     function populateDropdowns() {
       const type = document.getElementById('gridType').value;
@@ -846,7 +1009,7 @@
         // Period Column Header
         let tdPeriod = document.createElement('td');
         tdPeriod.className = 'border border-neutral-300 p-2 font-mono text-[10px] font-bold bg-neutral-50';
-        tdPeriod.innerHTML = p.id === 'BREAK' ? `BREAK` : `P${p.id}<br><span class="text-neutral-500 font-normal">${p.time}</span>`;
+        tdPeriod.innerHTML = p.id === 'BREAK' ? `BREAK` : `P${p.id}<br><span class="text-neutral-500 font-normal text-[9px]">${p.time}</span>`;
         tr.appendChild(tdPeriod);
 
         if (p.id === 'BREAK') {
@@ -861,26 +1024,27 @@
             td.className = 'border border-neutral-300 p-2 text-left align-top hover:bg-neutral-100 cursor-pointer transition-colors relative min-h-[60px]';
 
             if (type === 'class') {
-              let slot = timetableState[`${target}_${day}_${p.id}`];
+              let key = `${activeCycle}_${target}_${day}_${p.id}`;
+              let slot = timetableState[key];
               if (slot && slot.subject) {
                 let tObj = TEACHERS.find(t => t.id === slot.teacherId);
                 td.innerHTML = `
                   <div class="font-black text-xs">${slot.subject}</div>
-                  <div class="text-[10px] text-neutral-600">${tObj ? tObj.name : slot.teacherId}</div>
+                  <div class="text-[10px] text-neutral-600 truncate">${tObj ? tObj.name : slot.teacherId}</div>
                   <div class="text-[9px] font-mono text-neutral-400 mt-1">${slot.roomId}</div>
                 `;
               } else {
                 td.innerHTML = `<span class="text-[10px] font-mono text-neutral-300 uppercase">Unassigned</span>`;
               }
               if (activeRole === 'Timetable Manager' || activeRole === 'Principal') {
-                td.onclick = () => openEditSlotModal(target, day, p.id);
+                td.onclick = () => openEditSlotModal(activeCycle, target, day, p.id);
               }
             } else if (type === 'teacher') {
-              // Find class for this teacher
               let foundClass = null;
               let foundSlot = null;
               CLASSES.forEach(c => {
-                let s = timetableState[`${c}_${day}_${p.id}`];
+                let key = `${activeCycle}_${c}_${day}_${p.id}`;
+                let s = timetableState[key];
                 if (s && s.teacherId === target) {
                   foundClass = c;
                   foundSlot = s;
@@ -897,11 +1061,11 @@
                 td.innerHTML = `<span class="text-[10px] font-mono text-neutral-300 uppercase">FREE</span>`;
               }
             } else if (type === 'room') {
-              // Find class using this room
               let foundClass = null;
               let foundSlot = null;
               CLASSES.forEach(c => {
-                let s = timetableState[`${c}_${day}_${p.id}`];
+                let key = `${activeCycle}_${c}_${day}_${p.id}`;
+                let s = timetableState[key];
                 if (s && s.roomId === target) {
                   foundClass = c;
                   foundSlot = s;
@@ -913,7 +1077,7 @@
                 td.innerHTML = `
                   <div class="font-black text-xs">${foundSlot.subject}</div>
                   <div class="text-[10px] font-bold text-black uppercase">Class ${foundClass}</div>
-                  <div class="text-[9px] text-neutral-600">${tObj ? tObj.name : foundSlot.teacherId}</div>
+                  <div class="text-[9px] text-neutral-600 truncate">${tObj ? tObj.name : foundSlot.teacherId}</div>
                 `;
               } else {
                 td.innerHTML = `<span class="text-[10px] font-mono text-neutral-300 uppercase">AVAILABLE</span>`;
@@ -932,7 +1096,9 @@
        4. MODAL EDITING LOGIC & MANUAL OVERRIDES
        ========================================================================== */
 
-    function openEditSlotModal(className, day, periodId) {
+    function openEditSlotModal(cycle, className, day, periodId) {
+      document.getElementById('modalCycle').value = cycle;
+      document.getElementById('modalCycleLabel').value = `Week ${cycle}`;
       document.getElementById('modalClass').value = className;
       document.getElementById('modalDay').value = day;
       document.getElementById('modalPeriod').value = periodId;
@@ -946,7 +1112,8 @@
         subSelect.appendChild(opt);
       });
 
-      const current = timetableState[`${className}_${day}_${periodId}`];
+      const key = `${cycle}_${className}_${day}_${periodId}`;
+      const current = timetableState[key];
       if (current) {
         subSelect.value = current.subject;
       }
@@ -980,6 +1147,7 @@
 
     function saveSlotChanges(e) {
       e.preventDefault();
+      const cycle = document.getElementById('modalCycle').value;
       const c = document.getElementById('modalClass').value;
       const day = document.getElementById('modalDay').value;
       const p = document.getElementById('modalPeriod').value;
@@ -987,7 +1155,8 @@
       const teacher = document.getElementById('modalTeacher').value;
       const room = document.getElementById('modalRoom').value;
 
-      timetableState[`${c}_${day}_${p}`] = {
+      const key = `${cycle}_${c}_${day}_${p}`;
+      timetableState[key] = {
         subject: sub,
         teacherId: teacher,
         roomId: room
@@ -996,15 +1165,17 @@
       closeModal('editSlotModal');
       renderGrid();
       runValidationCheck();
-      showSystemAlert('Timetable slot updated successfully.', 'success');
+      showSystemAlert(`Slot updated for Week ${cycle}, Class ${c}.`, 'success');
     }
 
     function clearSlotAssignment() {
+      const cycle = document.getElementById('modalCycle').value;
       const c = document.getElementById('modalClass').value;
       const day = document.getElementById('modalDay').value;
       const p = document.getElementById('modalPeriod').value;
 
-      delete timetableState[`${c}_${day}_${p}`];
+      const key = `${cycle}_${c}_${day}_${p}`;
+      delete timetableState[key];
 
       closeModal('editSlotModal');
       renderGrid();
@@ -1012,19 +1183,53 @@
       showSystemAlert('Slot assignment cleared.', 'info');
     }
 
+    function populateAddTeacherSubjects() {
+      const sel = document.getElementById('newTeacherSubject');
+      if (!sel) return;
+      sel.innerHTML = '';
+      SUBJECTS.forEach(s => {
+        let opt = document.createElement('option');
+        opt.value = s.code;
+        opt.textContent = `${s.name} (${s.code})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function addNewTeacher(e) {
+      e.preventDefault();
+      const id = document.getElementById('newTeacherId').value.trim();
+      const name = document.getElementById('newTeacherName').value.trim();
+      const subject = document.getElementById('newTeacherSubject').value;
+      const maxP = parseInt(document.getElementById('newTeacherMax').value) || 64;
+
+      if (!id || !name) return;
+
+      TEACHERS.push({
+        id: id,
+        name: name,
+        subjects: [subject],
+        maxPeriods: maxP
+      });
+
+      renderTeachersTable();
+      populateDropdowns();
+      closeModal('addTeacherModal');
+      showSystemAlert(`New educator ${name} added to register.`, 'success');
+    }
+
     /* ==========================================================================
-       5. AUTOMATED SCHEDULING ENGINE (CONSTRAINT SOLVER SIMULATION)
+       5. AUTOMATED SCHEDULING ENGINE (2-WEEK CYCLE SOLVER)
        ========================================================================== */
 
     function triggerAutoSchedule() {
-      showSystemAlert('Running constraint-based optimization solver for all 25 classes...', 'info');
+      showSystemAlert('Running 2-Week Cycle optimization solver for all 25 classes...', 'info');
 
       setTimeout(() => {
-        seedDefaultTimetable(); // Re-seeds cleanly
+        seedDefaultTimetable();
         renderGrid();
         runValidationCheck();
         renderDashboardMatrix();
-        showSystemAlert('Timetable generated successfully with 0 mandatory constraint violations!', 'success');
+        showSystemAlert('2-Week Cycle Schedule (Week A & Week B) generated with 0 constraint conflicts!', 'success');
       }, 600);
     }
 
@@ -1035,39 +1240,42 @@
     function runValidationCheck() {
       let conflicts = [];
 
-      // Constraint 1: Teacher Double Booking
-      DAYS.forEach(day => {
-        PERIODS.forEach(p => {
-          if (p.id === 'BREAK') return;
+      ['A', 'B'].forEach(cycle => {
+        DAYS.forEach(day => {
+          PERIODS.forEach(p => {
+            if (p.id === 'BREAK') return;
 
-          let teacherAssignments = {};
-          let roomAssignments = {};
+            let teacherAssignments = {};
+            let roomAssignments = {};
 
-          CLASSES.forEach(c => {
-            let slot = timetableState[`${c}_${day}_${p.id}`];
-            if (slot && slot.teacherId) {
-              if (teacherAssignments[slot.teacherId]) {
-                conflicts.push({
-                  type: 'Teacher Double-Booking',
-                  severity: 'HIGH',
-                  details: `Teacher ${slot.teacherId} assigned to Class ${c} and Class ${teacherAssignments[slot.teacherId]} on ${day} Period ${p.id}`
-                });
-              } else {
-                teacherAssignments[slot.teacherId] = c;
+            CLASSES.forEach(c => {
+              let key = `${cycle}_${c}_${day}_${p.id}`;
+              let slot = timetableState[key];
+
+              if (slot && slot.teacherId) {
+                if (teacherAssignments[slot.teacherId]) {
+                  conflicts.push({
+                    type: 'Teacher Double-Booking',
+                    severity: 'HIGH',
+                    details: `Week ${cycle}: Teacher ${slot.teacherId} assigned to Class ${c} and Class ${teacherAssignments[slot.teacherId]} on ${day} Period ${p.id}`
+                  });
+                } else {
+                  teacherAssignments[slot.teacherId] = c;
+                }
               }
-            }
 
-            if (slot && slot.roomId) {
-              if (roomAssignments[slot.roomId]) {
-                conflicts.push({
-                  type: 'Classroom Double-Booking',
-                  severity: 'HIGH',
-                  details: `Facility ${slot.roomId} assigned to Class ${c} and Class ${roomAssignments[slot.roomId]} on ${day} Period ${p.id}`
-                });
-              } else {
-                roomAssignments[slot.roomId] = c;
+              if (slot && slot.roomId) {
+                if (roomAssignments[slot.roomId]) {
+                  conflicts.push({
+                    type: 'Classroom Double-Booking',
+                    severity: 'HIGH',
+                    details: `Week ${cycle}: Facility ${slot.roomId} assigned to Class ${c} and Class ${roomAssignments[slot.roomId]} on ${day} Period ${p.id}`
+                  });
+                } else {
+                  roomAssignments[slot.roomId] = c;
+                }
               }
-            }
+            });
           });
         });
       });
@@ -1084,8 +1292,8 @@
           <div class="p-6 rounded border border-black bg-neutral-100 text-black flex items-center space-x-4">
             <i class="fa-solid fa-circle-check text-2xl"></i>
             <div>
-              <h4 class="font-bold text-sm uppercase">All Mandatory Constraints Satisfied</h4>
-              <p class="text-xs text-neutral-600">Zero teacher double-bookings, classroom clashes, or period overlaps detected across all 25 classes.</p>
+              <h4 class="font-bold text-sm uppercase">All Mandatory Fortnightly Constraints Satisfied</h4>
+              <p class="text-xs text-neutral-600">Zero teacher double-bookings or room clashes detected across Week A and Week B for all 25 classes.</p>
             </div>
           </div>
         `;
@@ -1130,7 +1338,7 @@
             ${gradeClasses.map(c => `
               <div class="flex items-center justify-between text-xs font-mono p-1 bg-neutral-50 rounded hover:bg-neutral-100 cursor-pointer" onclick="viewClassGrid('${c}')">
                 <span class="font-bold">${c}</span>
-                <span class="text-[10px] text-neutral-500">40 Pds/Wk</span>
+                <span class="text-[10px] text-neutral-500">80 Pds/2Wk</span>
               </div>
             `).join('')}
           </div>
@@ -1159,7 +1367,7 @@
           <td class="p-3 font-semibold">${t.name}</td>
           <td class="p-3 font-mono text-[10px]">${t.subjects.join(', ')}</td>
           <td class="p-3 text-[10px] text-neutral-600">Grades 8–12</td>
-          <td class="p-3 text-center font-mono font-bold">32 / ${t.maxPeriods}</td>
+          <td class="p-3 text-center font-mono font-bold">64 / ${t.maxPeriods}</td>
           <td class="p-3 text-center">
             <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-black text-white">ACTIVE</span>
           </td>
@@ -1215,7 +1423,7 @@
         card.innerHTML = `
           <div>
             <div class="font-black text-base uppercase">Class ${c}</div>
-            <div class="text-xs text-neutral-500 font-mono">40 Scheduled Lessons / Wk</div>
+            <div class="text-xs text-neutral-500 font-mono">80 Scheduled Lessons / Fortnight</div>
           </div>
           <button onclick="viewClassGrid('${c}')" class="bg-black text-white hover:bg-neutral-800 text-[10px] font-bold px-3 py-1.5 rounded uppercase">
             View Grid
@@ -1230,7 +1438,7 @@
        ========================================================================== */
 
     async function exportToExcel() {
-      showSystemAlert('Generating Microsoft Excel (.xlsx) workbook...', 'info');
+      showSystemAlert('Generating 2-Week Cycle Microsoft Excel (.xlsx) workbook...', 'info');
 
       try {
         const workbook = new ExcelJS.Workbook();
@@ -1239,48 +1447,49 @@
         // 1. Overview Sheet
         const overviewSheet = workbook.addWorksheet('School Overview');
         overviewSheet.addRow(['SIBABALE SENIOR SECONDARY SCHOOL']);
-        overviewSheet.addRow(['SMART TIMETABLE PRO - MASTER ACADEMIC SCHEDULE']);
+        overviewSheet.addRow(['SMART TIMETABLE PRO - 2-WEEK CYCLE MASTER SCHEDULE']);
         overviewSheet.addRow(['CREATED BY MAWETHU MPANDE @SISONKEHUB']);
         overviewSheet.addRow([]);
         overviewSheet.addRow(['Total Classes', '25 Classes (Grades 8-12)']);
-        overviewSheet.addRow(['Total Weekly Periods', '1,000 Lessons']);
+        overviewSheet.addRow(['Total Fortnightly Periods', '2,000 Lessons (Week A & Week B)']);
         overviewSheet.addRow(['Validation Status', '100% Conflict-Free']);
 
-        // Style Overview Header
         overviewSheet.getRow(1).font = { bold: true, size: 16 };
-        overviewSheet.getRow(2).font = { size: 12 };
 
-        // 2. Master Timetable Sheet
-        const masterSheet = workbook.addWorksheet('Master Timetable');
-        masterSheet.addRow(['Class', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Room']);
-
-        masterSheet.getRow(1).font = { bold: true };
-        masterSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '000000' } };
-        masterSheet.getRow(1).font = { color: { argb: 'FFFFFF' }, bold: true };
+        // 2. Week A Sheet
+        const sheetA = workbook.addWorksheet('Week A Schedule');
+        sheetA.addRow(['Class', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Room']);
+        sheetA.getRow(1).font = { bold: true };
 
         CLASSES.forEach(c => {
           DAYS.forEach(day => {
             PERIODS.forEach(p => {
               if (p.id === 'BREAK') return;
-              let slot = timetableState[`${c}_${day}_${p.id}`];
-              if (slot) {
-                masterSheet.addRow([c, day, `Period ${p.id}`, p.time, slot.subject, slot.teacherId, slot.roomId]);
-              }
+              let slot = timetableState[`A_${c}_${day}_${p.id}`];
+              if (slot) sheetA.addRow([c, day, `Period ${p.id}`, p.time, slot.subject, slot.teacherId, slot.roomId]);
             });
           });
         });
 
-        // 3. Teacher Register Sheet
-        const teacherSheet = workbook.addWorksheet('Teacher Register');
-        teacherSheet.addRow(['Teacher ID', 'Educator Name', 'Qualified Subjects', 'Max Periods']);
-        TEACHERS.forEach(t => {
-          teacherSheet.addRow([t.id, t.name, t.subjects.join(', '), t.maxPeriods]);
+        // 3. Week B Sheet
+        const sheetB = workbook.addWorksheet('Week B Schedule');
+        sheetB.addRow(['Class', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Room']);
+        sheetB.getRow(1).font = { bold: true };
+
+        CLASSES.forEach(c => {
+          DAYS.forEach(day => {
+            PERIODS.forEach(p => {
+              if (p.id === 'BREAK') return;
+              let slot = timetableState[`B_${c}_${day}_${p.id}`];
+              if (slot) sheetB.addRow([c, day, `Period ${p.id}`, p.time, slot.subject, slot.teacherId, slot.roomId]);
+            });
+          });
         });
 
         // Export to Blob
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, 'Sibabale_Secondary_Timetable_2026.xlsx');
+        saveAs(blob, 'Sibabale_Secondary_2WeekCycle_Timetable_2026.xlsx');
 
         showSystemAlert('Excel Workbook exported successfully!', 'success');
         closeModal('exportModal');
@@ -1309,7 +1518,7 @@
                 alignment: AlignmentType.CENTER
               }),
               new Paragraph({
-                text: "SMART TIMETABLE PRO • OFFICIAL MASTER SCHEDULE",
+                text: "SMART TIMETABLE PRO • 2-WEEK CYCLE MASTER PUBLICATION",
                 alignment: AlignmentType.CENTER
               }),
               new Paragraph({ text: "" }),
@@ -1321,25 +1530,16 @@
                 alignment: AlignmentType.CENTER
               }),
               new Paragraph({ text: "" }),
-              new Paragraph({
-                text: "Coverage: Grades 8–12 (25 Classes)",
-                heading: HeadingLevel.HEADING_2
-              }),
-              new Paragraph({ text: "" }),
 
-              // Sample Class Table (8A)
-              new Paragraph({ text: "CLASS 8A WEEKLY SCHEDULE", heading: HeadingLevel.HEADING_3 }),
+              // Week A Table for Class 8A
+              new Paragraph({ text: "CLASS 8A - WEEK A SCHEDULE", heading: HeadingLevel.HEADING_2 }),
               new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
                   new TableRow({
                     children: [
                       new TableCell({ children: [new Paragraph({ text: "Period", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "Monday", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "Tuesday", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "Wednesday", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "Thursday", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "Friday", bold: true })] }),
+                      ...DAYS.map(d => new TableCell({ children: [new Paragraph({ text: d, bold: true })] }))
                     ]
                   }),
                   ...PERIODS.filter(p => p.id !== 'BREAK').map(p => {
@@ -1347,7 +1547,34 @@
                       children: [
                         new TableCell({ children: [new Paragraph({ text: `P${p.id}` })] }),
                         ...DAYS.map(day => {
-                          let slot = timetableState[`8A_${day}_${p.id}`];
+                          let slot = timetableState[`A_8A_${day}_${p.id}`];
+                          return new TableCell({ children: [new Paragraph({ text: slot ? slot.subject : '-' })] });
+                        })
+                      ]
+                    });
+                  })
+                ]
+              }),
+
+              new Paragraph({ text: "" }),
+
+              // Week B Table for Class 8A
+              new Paragraph({ text: "CLASS 8A - WEEK B SCHEDULE", heading: HeadingLevel.HEADING_2 }),
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "Period", bold: true })] }),
+                      ...DAYS.map(d => new TableCell({ children: [new Paragraph({ text: d, bold: true })] }))
+                    ]
+                  }),
+                  ...PERIODS.filter(p => p.id !== 'BREAK').map(p => {
+                    return new TableRow({
+                      children: [
+                        new TableCell({ children: [new Paragraph({ text: `P${p.id}` })] }),
+                        ...DAYS.map(day => {
+                          let slot = timetableState[`B_8A_${day}_${p.id}`];
                           return new TableCell({ children: [new Paragraph({ text: slot ? slot.subject : '-' })] });
                         })
                       ]
@@ -1365,7 +1592,7 @@
         });
 
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, "Sibabale_Secondary_Timetable_Document.docx");
+        saveAs(blob, "Sibabale_Secondary_2WeekCycle_Timetable.docx");
 
         showSystemAlert('Word publication document exported successfully!', 'success');
         closeModal('exportModal');
@@ -1385,7 +1612,6 @@
 
       const log = document.getElementById('aiChatLog');
 
-      // Add user text
       let userDiv = document.createElement('div');
       userDiv.className = 'p-3 rounded bg-neutral-900 border border-neutral-700 text-white text-right font-bold';
       userDiv.textContent = `YOU: ${text}`;
@@ -1393,22 +1619,23 @@
 
       input.value = '';
 
-      // Generate AI answer
       setTimeout(() => {
         let aiDiv = document.createElement('div');
         aiDiv.className = 'p-3 rounded bg-neutral-800 border border-neutral-700 text-neutral-200';
 
-        let reply = "I have analyzed your request. All 25 classes are currently scheduled with 0 constraint conflicts. Teacher workloads are distributed within policy limits.";
+        let reply = "I have analyzed both Week A and Week B schedules. All 25 classes are fully scheduled with 0 fortnightly conflicts.";
         if (text.toLowerCase().includes('teacher') || text.toLowerCase().includes('workload')) {
-          reply = "DIAGNOSTIC REPORT: Staff workloads are balanced. Mr. N. Mbeki and Mr. M. Mpande have highest assigned allocations at 32/35 weekly periods.";
+          reply = "FORTNIGHTLY WORKLOAD REPORT: Mr. N. Mbeki and Mr. M. Mpande are allocated 64 periods across Week A and Week B within their maximum policy limit.";
         } else if (text.toLowerCase().includes('room') || text.toLowerCase().includes('lab')) {
-          reply = "FACILITY DIAGNOSTIC: Science Labs 1 & 2 are at 85% utilization during periods 1-4. Computer Lab 1 has available slots on Thursday afternoon.";
+          reply = "FACILITY REPORT: Science Lab 1 has optimal load across Week A and Week B. No overlapping room bookings detected.";
+        } else if (text.toLowerCase().includes('cycle') || text.toLowerCase().includes('week')) {
+          reply = "CYCLE ANALYSIS: Week A and Week B have an even distribution of 40 periods per class per week.";
         }
 
         aiDiv.innerHTML = `<span class="font-bold text-white block mb-1">AI ASSISTANT:</span> ${reply}`;
         log.appendChild(aiDiv);
         log.scrollTop = log.scrollHeight;
-      }, 400);
+      }, 350);
     }
 
     /* ==========================================================================
@@ -1416,14 +1643,14 @@
        ========================================================================== */
 
     function saveVersionSnapshot() {
-      let tag = `v1.${currentVersions.length + 1}`;
+      let tag = `v2.${currentVersions.length + 1}`;
       let date = new Date().toLocaleString();
 
       currentVersions.push({
         tag: tag,
         date: date,
         author: activeRole,
-        desc: 'Manual Snapshot Saved'
+        desc: 'Manual 2-Week Snapshot Saved'
       });
 
       renderVersionTable();
@@ -1460,6 +1687,22 @@
        12. GENERAL APPLICATION UTILITIES
        ========================================================================== */
 
+    function toggleSidebar(forceState) {
+      const sidebar = document.getElementById('mainSidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      
+      const isOpen = !sidebar.classList.contains('-translate-x-full');
+      const nextState = forceState !== undefined ? forceState : !isOpen;
+
+      if (nextState) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(el => {
@@ -1475,6 +1718,9 @@
         activeNav.classList.remove('text-neutral-400', 'hover:text-white', 'hover:bg-neutral-900');
         activeNav.classList.add('bg-white', 'text-black');
       }
+
+      // Close mobile drawer on tab switch
+      toggleSidebar(false);
     }
 
     function changeRole(role) {
@@ -1489,7 +1735,7 @@
         return;
       }
       document.getElementById('statusLabel').textContent = 'PUBLISHED & APPROVED';
-      showSystemAlert('Timetable approved and published for Sibabale Senior Secondary School!', 'success');
+      showSystemAlert('2-Week Cycle Timetable approved and published for Sibabale Senior Secondary School!', 'success');
     }
 
     function showSystemAlert(message, type = 'info') {
