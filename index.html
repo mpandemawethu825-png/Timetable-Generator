@@ -51,6 +51,15 @@
       background-color: #e0e7ff !important;
       border: 2px dashed #4f46e5 !important;
     }
+    
+    /* Subtle pulse animation for auto-generator button */
+    @keyframes subtlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .pulse-btn {
+      animation: subtlePulse 2.5s infinite;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
@@ -67,12 +76,20 @@
       </div>
     </div>
 
-    <!-- Quick Action Buttons -->
+    <!-- Action Buttons -->
     <div class="flex items-center space-x-2 no-print">
-      <button onclick="triggerConstraintAutoSchedule()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
+      <!-- AUTO GENERATE TIMETABLE BUTTON -->
+      <button onclick="triggerConstraintAutoSchedule()" class="pulse-btn bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
         <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
-        <span>AI Auto-Scheduler</span>
+        <span>Auto-Generate Timetable</span>
       </button>
+
+      <!-- MANUAL BUILDER / EDIT BUTTON -->
+      <button onclick="openModal('manualGenerateModal')" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-hand-pointer text-amber-200"></i>
+        <span>Manually Build / Edit Slot</span>
+      </button>
+
       <button onclick="openModal('exportModal')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
         <i class="fa-solid fa-download text-slate-400"></i>
         <span>Export</span>
@@ -166,7 +183,14 @@
         </div>
 
         <div class="flex items-center space-x-2">
-          <span class="text-[11px] text-slate-400 hidden lg:inline-block"><i class="fa-solid fa-hand-pointer mr-1"></i> Drag & drop cells to reorder</span>
+          <button onclick="triggerConstraintAutoSchedule()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Auto Schedule All</span>
+          </button>
+          <button onclick="openModal('manualGenerateModal')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Manual Slot Entry</span>
+          </button>
           <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
             <i class="fa-solid fa-print"></i>
             <span>Print</span>
@@ -422,6 +446,85 @@
 
   </main>
 
+  <!-- MODAL: MANUAL TIMETABLE GENERATION / SLOT BUILDER -->
+  <div id="manualGenerateModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-hand-pointer text-amber-600"></i>
+          <h3 class="font-bold text-sm text-slate-900">Manual Slot Generation</h3>
+        </div>
+        <button onclick="closeModal('manualGenerateModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="submitManualSlot(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Cycle / Week</label>
+            <select id="manCycle" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500 font-semibold">
+              <option value="A">Week A</option>
+              <option value="B">Week B</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Target Class</label>
+            <select id="manClass" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500 font-semibold"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Day of Week</label>
+            <select id="manDay" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500">
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Period Slot</label>
+            <select id="manPeriod" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500">
+              <option value="1">Period 1 (08:00 - 08:45)</option>
+              <option value="2">Period 2 (08:45 - 09:30)</option>
+              <option value="3">Period 3 (09:30 - 10:15)</option>
+              <option value="4">Period 4 (10:15 - 11:00)</option>
+              <option value="5">Period 5 (11:30 - 12:15)</option>
+              <option value="6">Period 6 (12:15 - 13:00)</option>
+              <option value="7">Period 7 (13:00 - 13:45)</option>
+              <option value="8">Period 8 (13:45 - 14:30)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Subject</label>
+          <select id="manSubject" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500"></select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Assigned Teacher</label>
+          <select id="manTeacher" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500"></select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Room / Lab Facility</label>
+          <select id="manRoom" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-amber-500"></select>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('manualGenerateModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg">Cancel</button>
+          <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded-lg shadow-sm">
+            <i class="fa-solid fa-plus mr-1"></i> Apply Manual Allocation
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL: EDIT SLOT -->
   <div id="editSlotModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
@@ -464,7 +567,7 @@
         </div>
 
         <div class="pt-2 flex justify-end space-x-2">
-          <button type="button" onclick="clearSlotAssignment()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg">Clear</button>
+          <button type="button" onclick="clearSlotAssignment()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg">Clear Slot</button>
           <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg">Save</button>
         </div>
       </form>
@@ -642,9 +745,10 @@
     window.onload = function() {
       loadLocalStorageData();
       if (Object.keys(timetableState).length === 0) {
-        seedDefaultTimetable();
+        triggerConstraintAutoSchedule();
       }
       populateDropdowns();
+      populateManualModalDropdowns();
       renderGrid();
       renderTeachersTable();
       renderSubjectsTable();
@@ -746,7 +850,7 @@
       renderGrid();
     }
 
-    // CONSTRAINT-BASED SCHEDULER
+    // AUTO-GENERATOR ALGORITHM
     function triggerConstraintAutoSchedule() {
       timetableState = {};
       const cycles = ['A', 'B'];
@@ -802,11 +906,82 @@
       renderGrid();
       runValidationCheck();
       renderAnalytics();
-      showSystemAlert('Smart constraint-based timetable generated!', 'success');
+      showSystemAlert('Smart auto-timetable generated successfully across all classes & subjects!', 'success');
     }
 
-    function seedDefaultTimetable() {
-      triggerConstraintAutoSchedule();
+    // MANUAL MODAL DROPDOWNS POPULATION
+    function populateManualModalDropdowns() {
+      const manClass = document.getElementById('manClass');
+      const manSub = document.getElementById('manSubject');
+      const manTeach = document.getElementById('manTeacher');
+      const manRoom = document.getElementById('manRoom');
+
+      if (!manClass) return;
+
+      manClass.innerHTML = '';
+      CLASSES.forEach(c => {
+        let opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = `Class ${c}`;
+        manClass.appendChild(opt);
+      });
+
+      manSub.innerHTML = '';
+      SUBJECTS.forEach(s => {
+        let opt = document.createElement('option');
+        opt.value = s.code;
+        opt.textContent = `${s.name} (${s.code})`;
+        manSub.appendChild(opt);
+      });
+
+      manTeach.innerHTML = '';
+      TEACHERS.forEach(t => {
+        let opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        manTeach.appendChild(opt);
+      });
+
+      manRoom.innerHTML = '';
+      ROOMS.forEach(r => {
+        let opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.name;
+        manRoom.appendChild(opt);
+      });
+    }
+
+    // SUBMIT MANUAL SLOT ENTRY
+    function submitManualSlot(e) {
+      e.preventDefault();
+      const cycle = document.getElementById('manCycle').value;
+      const c = document.getElementById('manClass').value;
+      const day = document.getElementById('manDay').value;
+      const p = document.getElementById('manPeriod').value;
+      const sub = document.getElementById('manSubject').value;
+      const teacher = document.getElementById('manTeacher').value;
+      const room = document.getElementById('manRoom').value;
+
+      const key = `${cycle}_${c}_${day}_${p}`;
+      timetableState[key] = {
+        subject: sub,
+        teacherId: teacher,
+        roomId: room
+      };
+
+      saveLocalStorageData();
+      closeModal('manualGenerateModal');
+      
+      // Auto switch grid to match user input
+      activeCycle = cycle;
+      setGridCycle(cycle);
+      document.getElementById('gridType').value = 'class';
+      populateDropdowns();
+      document.getElementById('gridTarget').value = c;
+      renderGrid();
+      runValidationCheck();
+      renderAnalytics();
+      showSystemAlert(`Manually placed ${sub} for Class ${c} on ${day} Period ${p} (Week ${cycle})`, 'success');
     }
 
     // GRID RENDER & DRAG DROP LOGIC
@@ -842,7 +1017,7 @@
 
           DAYS.forEach(day => {
             let td = document.createElement('td');
-            td.className = 'p-2 border border-slate-200 transition-colors relative';
+            td.className = 'p-2 border border-slate-200 transition-colors relative cursor-pointer';
 
             if (type === 'class') {
               const cellKey = `${activeCycle}_${target}_${day}_${p.id}`;
@@ -876,7 +1051,6 @@
                 td.classList.remove('drag-over');
                 const srcKey = e.dataTransfer.getData('text/plain');
                 if (srcKey && srcKey !== cellKey) {
-                  // Swap slots
                   const temp = timetableState[cellKey];
                   timetableState[cellKey] = timetableState[srcKey];
                   if (temp) timetableState[srcKey] = temp;
@@ -1288,6 +1462,7 @@
       saveLocalStorageData();
       renderRoomsTable();
       populateDropdowns();
+      populateManualModalDropdowns();
       showSystemAlert(`Room ${name} added successfully!`, 'success');
     }
 
@@ -1296,6 +1471,7 @@
       saveLocalStorageData();
       renderRoomsTable();
       populateDropdowns();
+      populateManualModalDropdowns();
       showSystemAlert(`Room ${deleted[0]?.name || ''} deleted.`, 'info');
     }
 
@@ -1313,6 +1489,7 @@
       saveLocalStorageData();
       renderClassesListing();
       populateDropdowns();
+      populateManualModalDropdowns();
       showSystemAlert(`Class ${trimmed} added successfully!`, 'success');
     }
 
@@ -1321,6 +1498,7 @@
       saveLocalStorageData();
       renderClassesListing();
       populateDropdowns();
+      populateManualModalDropdowns();
       renderGrid();
       showSystemAlert(`Class ${className} deleted.`, 'info');
     }
@@ -1337,6 +1515,7 @@
       saveLocalStorageData();
       renderSubjectsTable();
       populateAddTeacherSubjects();
+      populateManualModalDropdowns();
       showSystemAlert(`Subject ${name} added!`, 'success');
     }
 
@@ -1345,6 +1524,7 @@
       saveLocalStorageData();
       renderSubjectsTable();
       populateAddTeacherSubjects();
+      populateManualModalDropdowns();
       showSystemAlert(`Subject ${deleted[0]?.name || ''} deleted.`, 'info');
     }
 
@@ -1353,6 +1533,7 @@
       saveLocalStorageData();
       renderTeachersTable();
       populateDropdowns();
+      populateManualModalDropdowns();
       runValidationCheck();
       showSystemAlert(`Teacher ${deleted[0]?.name || ''} removed.`, 'info');
     }
@@ -1434,6 +1615,7 @@
       saveLocalStorageData();
       renderTeachersTable();
       populateDropdowns();
+      populateManualModalDropdowns();
       closeModal('addTeacherModal');
       showSystemAlert(`Teacher ${name} added!`, 'success');
     }
