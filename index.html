@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sibabale Smart Timetable Pro (2-Week Cycle) | Sibabale Senior Secondary School</title>
+  <title>Sibabale Smart Timetable Pro</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,802 +14,585 @@
   <!-- Google Fonts - Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Export Libraries: ExcelJS, docx, FileSaver -->
+  <!-- Export Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            black: '#0a0a0a',
-            darkgray: '#1a1a1a',
-            midgray: '#404040',
-            lightgray: '#e5e5e5',
-            subtlegray: '#f5f5f5',
-            purewhite: '#ffffff'
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Chart.js for Advanced Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #0a0a0a;
-      color: #0a0a0a;
+      background-color: #f8fafc;
+      color: #0f172a;
     }
     
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #1a1a1a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #404040;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #737373;
-    }
-
-    /* Print styles */
     @media print {
-      .no-print {
-        display: none !important;
-      }
-      .print-only {
-        display: block !important;
-      }
-      body {
-        background-color: white !important;
-        color: black !important;
-      }
-      .printable-area {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-      }
+      .no-print { display: none !important; }
+      body { background-color: white !important; }
+      .printable-area { border: none !important; box-shadow: none !important; }
     }
 
-    /* Touch optimization */
-    button, select, input {
-      touch-action: manipulation;
+    /* Drag & Drop Visual Styles */
+    .draggable-slot {
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .draggable-slot:active {
+      cursor: grabbing;
+      transform: scale(0.97);
+      opacity: 0.8;
+    }
+    .drag-over {
+      background-color: #e0e7ff !important;
+      border: 2px dashed #4f46e5 !important;
     }
   </style>
 </head>
-<body class="bg-black text-slate-900 min-h-screen flex flex-col antialiased selection:bg-slate-800 selection:text-white">
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
 
-  <!-- TOP HEADER / BRANDING BAR -->
-  <header class="bg-black border-b border-neutral-800 text-white px-4 md:px-6 py-3 sticky top-0 z-40 flex flex-wrap items-center justify-between shadow-xl">
+  <!-- TOP BAR -->
+  <header class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between shadow-md gap-2">
     <div class="flex items-center space-x-3">
-      <!-- Mobile Sidebar Toggle -->
-      <button onclick="toggleSidebar()" class="md:hidden text-white hover:text-neutral-300 p-2 focus:outline-none" aria-label="Toggle Navigation">
-        <i class="fa-solid fa-bars text-lg"></i>
-      </button>
-      
-      <div class="w-9 h-9 bg-white text-black font-black text-xl flex items-center justify-center rounded border border-neutral-300 shadow-inner">
+      <div class="w-9 h-9 bg-indigo-600 font-bold text-xl flex items-center justify-center rounded-lg shadow-sm text-white">
         S
       </div>
       <div>
-        <h1 class="font-bold text-sm md:text-lg leading-none tracking-tight text-white uppercase">SIBABALE SECONDARY SCHOOL</h1>
-        <p class="text-[10px] md:text-xs text-neutral-400 font-mono mt-0.5">SMART TIMETABLE PRO <span class="text-neutral-500">|</span> 2-WEEK CYCLE</p>
+        <h1 id="headerSchoolName" class="font-bold text-base leading-tight">Sibabale Secondary School</h1>
+        <p class="text-xs text-slate-400">Smart Timetable Pro & Enterprise Manager</p>
       </div>
     </div>
 
-    <!-- Active User & Role Controls -->
-    <div class="flex items-center space-x-2 md:space-x-4 text-sm no-print mt-2 sm:mt-0">
-      <div class="hidden lg:flex flex-col items-end border-r border-neutral-800 pr-4">
-        <span class="text-[10px] text-neutral-400 uppercase tracking-widest">Active System Role</span>
-        <select id="roleSelector" class="bg-neutral-900 border border-neutral-700 text-xs font-semibold text-white rounded px-2 py-1 mt-0.5 focus:outline-none focus:border-white transition-colors cursor-pointer" onchange="changeRole(this.value)">
-          <option value="Principal">Principal (Full Access)</option>
-          <option value="Timetable Manager" selected>Timetable Manager (Edit)</option>
-          <option value="Teacher">Teacher (View Only)</option>
-          <option value="Read-Only">Read-Only Visitor</option>
-        </select>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <button onclick="triggerAutoSchedule()" class="bg-white text-black hover:bg-neutral-200 font-bold text-xs uppercase px-3 py-2 rounded transition-all shadow-md flex items-center space-x-1.5 border border-neutral-300">
-          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-          <span class="hidden xs:inline">Generate</span>
-        </button>
-        <button onclick="openModal('exportModal')" class="bg-neutral-900 text-white hover:bg-neutral-800 font-semibold text-xs uppercase px-3 py-2 rounded transition-colors border border-neutral-700 flex items-center space-x-1.5">
-          <i class="fa-solid fa-file-export text-xs"></i>
-          <span class="hidden xs:inline">Export</span>
-        </button>
-      </div>
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center space-x-2 no-print">
+      <button onclick="triggerConstraintAutoSchedule()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
+        <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+        <span>AI Auto-Scheduler</span>
+      </button>
+      <button onclick="openModal('exportModal')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
+        <i class="fa-solid fa-download text-slate-400"></i>
+        <span>Export</span>
+      </button>
     </div>
   </header>
 
-  <!-- MAIN APP CONTAINER -->
-  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-white border-b border-slate-200 px-4 flex space-x-1 overflow-x-auto no-print shadow-xs">
+    <button onclick="switchTab('timetable')" id="nav-timetable" class="nav-btn border-b-2 border-indigo-600 text-indigo-600 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-calendar-days"></i>
+      <span>Timetable Grid</span>
+    </button>
 
-    <!-- BACKDROP FOR MOBILE SIDEBAR -->
-    <div id="sidebarBackdrop" onclick="toggleSidebar(false)" class="hidden fixed inset-0 bg-black/70 z-20 md:hidden backdrop-blur-sm transition-opacity"></div>
+    <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Analytics & Workload</span>
+    </button>
 
-    <!-- NAVIGATION SIDEBAR -->
-    <aside id="mainSidebar" class="fixed md:static inset-y-0 left-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out w-64 bg-neutral-950 border-r border-neutral-800 text-white flex-shrink-0 flex flex-col no-print h-full">
-      
-      <div class="p-3 border-b border-neutral-800 md:hidden flex justify-between items-center bg-neutral-900">
-        <span class="text-xs font-bold uppercase text-neutral-400">Navigation Menu</span>
-        <button onclick="toggleSidebar(false)" class="p-1 text-neutral-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
+    <button onclick="switchTab('teachers')" id="nav-teachers" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-user-tie"></i>
+      <span>Teachers</span>
+    </button>
+
+    <button onclick="switchTab('classes')" id="nav-classes" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-school"></i>
+      <span id="navClassCount">Classes (25)</span>
+    </button>
+
+    <button onclick="switchTab('subjects')" id="nav-subjects" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-book"></i>
+      <span>Subjects</span>
+    </button>
+
+    <button onclick="switchTab('validation')" id="nav-validation" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Clash Auditor</span>
+      <span id="badgeConflictCount" class="bg-slate-200 text-slate-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">0</span>
+    </button>
+
+    <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
+      <i class="fa-solid fa-gear"></i>
+      <span>Settings & Backup</span>
+    </button>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-4">
+
+    <!-- ALERT MESSAGE -->
+    <div id="systemAlert" class="hidden p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center justify-between shadow-xs">
+      <div class="flex items-center space-x-2.5">
+        <i id="alertIcon" class="fa-solid fa-circle-info text-indigo-600 text-base"></i>
+        <span id="alertBody" class="font-medium">System message details...</span>
       </div>
+      <button onclick="dismissAlert()" class="text-indigo-400 hover:text-indigo-900 font-bold ml-2">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
 
-      <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
-        <div class="text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-2 px-3">Management</div>
+    <!-- TAB 1: TIMETABLE GRID -->
+    <div id="tab-timetable" class="tab-content space-y-4">
+      
+      <!-- CONTROLS BAR -->
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3 no-print">
         
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all bg-white text-black">
-          <i class="fa-solid fa-chart-pie w-4 text-center"></i>
-          <span>Dashboard</span>
-        </button>
-
-        <button onclick="switchTab('timetable')" id="nav-timetable" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-calendar-days w-4 text-center"></i>
-          <span>Interactive Grid</span>
-        </button>
-
-        <button onclick="switchTab('classes')" id="nav-classes" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-school w-4 text-center"></i>
-          <span>25 Classes</span>
-        </button>
-
-        <button onclick="switchTab('teachers')" id="nav-teachers" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-user-tie w-4 text-center"></i>
-          <span>Teachers Register</span>
-        </button>
-
-        <button onclick="switchTab('subjects')" id="nav-subjects" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-book-open w-4 text-center"></i>
-          <span>Subject Matrix</span>
-        </button>
-
-        <button onclick="switchTab('rooms')" id="nav-rooms" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-door-closed w-4 text-center"></i>
-          <span>Classrooms & Labs</span>
-        </button>
-
-        <div class="pt-4 text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-2 px-3">Intelligence & Tools</div>
-
-        <button onclick="switchTab('validation')" id="nav-validation" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-shield-halved w-4 text-center"></i>
-            <span>Conflict Audit</span>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Week Selector -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+            <button id="gridCycleA" onclick="setGridCycle('A')" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-xs">Week A</button>
+            <button id="gridCycleB" onclick="setGridCycle('B')" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">Week B</button>
           </div>
-          <span id="badgeConflictCount" class="bg-neutral-800 text-white font-mono text-[10px] px-1.5 py-0.5 rounded border border-neutral-700">0</span>
-        </button>
 
-        <button onclick="switchTab('ai')" id="nav-ai" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-microchip w-4 text-center"></i>
-          <span>AI Assistant</span>
-        </button>
+          <!-- View Mode -->
+          <div class="flex items-center space-x-1">
+            <label class="text-xs font-medium text-slate-500">View By:</label>
+            <select id="gridType" class="bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500" onchange="populateDropdowns(); renderGrid();">
+              <option value="class">Class Timetable</option>
+              <option value="teacher">Teacher Master Schedule</option>
+              <option value="room">Room Allocation Schedule</option>
+            </select>
+          </div>
 
-        <button onclick="switchTab('versions')" id="nav-versions" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-code-branch w-4 text-center"></i>
-          <span>Version History</span>
-        </button>
-
-        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider transition-all text-neutral-400 hover:text-white hover:bg-neutral-900">
-          <i class="fa-solid fa-sliders w-4 text-center"></i>
-          <span>School Setup</span>
-        </button>
-
-        <!-- Role Select for mobile display -->
-        <div class="pt-4 lg:hidden border-t border-neutral-800 mt-2">
-          <label class="block text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-1 px-3">System Role</label>
-          <div class="px-3">
-            <select class="w-full bg-neutral-900 border border-neutral-700 text-xs font-semibold text-white rounded px-2 py-1.5 focus:outline-none" onchange="changeRole(this.value)">
-              <option value="Principal">Principal (Full Access)</option>
-              <option value="Timetable Manager" selected>Timetable Manager (Edit)</option>
-              <option value="Teacher">Teacher (View Only)</option>
-              <option value="Read-Only">Read-Only Visitor</option>
+          <!-- Target Selection -->
+          <div class="flex items-center space-x-1">
+            <label class="text-xs font-medium text-slate-500">Target:</label>
+            <select id="gridTarget" class="bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 min-w-[140px]" onchange="renderGrid()">
+              <!-- Populated dynamically -->
             </select>
           </div>
         </div>
-      </nav>
 
-      <!-- CREATOR BRANDING FOOTER -->
-      <div class="p-4 border-t border-neutral-800 bg-neutral-900 text-center">
-        <p class="text-[10px] font-bold tracking-widest uppercase text-neutral-400">CREATED BY</p>
-        <p class="text-xs font-extrabold text-white tracking-wider mt-0.5">MAWETHU MPANDE</p>
-        <p class="text-[10px] font-mono text-neutral-500">@SISONKEHUB</p>
-      </div>
-    </aside>
-
-    <!-- CONTENT DISPLAY CONTAINER -->
-    <main class="flex-1 bg-white text-black overflow-y-auto p-3 sm:p-5 md:p-8">
-
-      <!-- ALERT MESSAGE CONTAINER -->
-      <div id="systemAlert" class="hidden mb-6 p-4 rounded border border-black bg-neutral-100 text-black flex items-center justify-between shadow-sm">
-        <div class="flex items-center space-x-3">
-          <i id="alertIcon" class="fa-solid fa-circle-info text-lg"></i>
-          <div>
-            <h4 id="alertTitle" class="font-bold text-xs uppercase tracking-wider">System Message</h4>
-            <p id="alertBody" class="text-xs text-neutral-700">Detailed alert notification text.</p>
-          </div>
-        </div>
-        <button onclick="dismissAlert()" class="text-neutral-500 hover:text-black p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- TAB 1: DASHBOARD -->
-      <div id="tab-dashboard" class="tab-content space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-neutral-200 gap-4">
-          <div>
-            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Executive Dashboard</h2>
-            <p class="text-xs text-neutral-600">Sibabale Senior Secondary School • 2-Week Cycle Academic Schedule 2026</p>
-          </div>
-          <div class="flex items-center space-x-3">
-            <span class="text-xs font-mono bg-neutral-100 text-neutral-800 border border-neutral-300 px-3 py-1.5 rounded font-semibold">
-              STATUS: <span id="statusLabel" class="font-bold text-black uppercase">DRAFT - UNAPPROVED</span>
-            </span>
-            <button onclick="triggerApproval()" class="bg-black text-white hover:bg-neutral-800 font-bold text-xs uppercase px-4 py-2 rounded transition-colors border border-black">
-              Approve & Publish
-            </button>
-          </div>
-        </div>
-
-        <!-- METRICS CARDS -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Classes Enrolled</div>
-            <div class="text-xl md:text-2xl font-black my-1">25 / 25</div>
-            <div class="text-[11px] text-neutral-600 font-semibold">Grades 8–12 (A-E)</div>
-          </div>
-
-          <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Fortnightly Lessons</div>
-            <div id="metricLessons" class="text-xl md:text-2xl font-black my-1">2,000 / 2,000</div>
-            <div class="text-[11px] text-neutral-600 font-semibold">2-Week Scheduled Periods</div>
-          </div>
-
-          <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Teaching Staff</div>
-            <div id="metricTeachers" class="text-xl md:text-2xl font-black my-1">32 Teachers</div>
-            <div class="text-[11px] text-neutral-600 font-semibold">Cycle Workload Allocated</div>
-          </div>
-
-          <div class="p-4 rounded border border-neutral-300 bg-white shadow-sm flex flex-col justify-between">
-            <div class="text-neutral-500 text-[10px] font-mono uppercase tracking-wider">Conflict Audit</div>
-            <div id="metricConflicts" class="text-xl md:text-2xl font-black my-1">0 Clashes</div>
-            <div class="text-[11px] text-neutral-600 font-semibold">100% Constraints Passed</div>
-          </div>
-        </div>
-
-        <!-- CYCLE SWITCHER DIRECT BANNER -->
-        <div class="p-4 rounded-lg bg-neutral-900 text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-repeat text-xl text-amber-400"></i>
-            <div>
-              <div class="text-xs font-bold uppercase tracking-wider">Active Scheduling Cycle</div>
-              <div class="text-xs text-neutral-300">Timetable runs on an alternating 10-Day (Week A / Week B) schedule.</div>
-            </div>
-          </div>
-          <div class="flex items-center space-x-2 w-full sm:w-auto">
-            <button onclick="setGlobalCycle('A')" id="btnCycleA" class="flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-white text-black border-white">Week A</button>
-            <button onclick="setGlobalCycle('B')" id="btnCycleB" class="flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white">Week B</button>
-          </div>
-        </div>
-
-        <!-- QUICK ACTIONS GRID -->
-        <div class="p-4 md:p-6 rounded border border-neutral-300 bg-neutral-50">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-700 mb-4">Core Administrative Controls</h3>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            <button onclick="triggerAutoSchedule()" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
-              <i class="fa-solid fa-gears text-lg mb-2 text-black"></i>
-              <div class="text-xs font-bold uppercase">Auto-Generate</div>
-            </button>
-
-            <button onclick="switchTab('timetable')" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
-              <i class="fa-solid fa-pen-to-square text-lg mb-2 text-black"></i>
-              <div class="text-xs font-bold uppercase">Manual Editor</div>
-            </button>
-
-            <button onclick="switchTab('teachers')" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
-              <i class="fa-solid fa-users text-lg mb-2 text-black"></i>
-              <div class="text-xs font-bold uppercase">Staff Workload</div>
-            </button>
-
-            <button onclick="openModal('exportModal')" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
-              <i class="fa-solid fa-file-excel text-lg mb-2 text-black"></i>
-              <div class="text-xs font-bold uppercase">Excel Export</div>
-            </button>
-
-            <button onclick="openModal('exportModal')" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
-              <i class="fa-solid fa-file-word text-lg mb-2 text-black"></i>
-              <div class="text-xs font-bold uppercase">Word Export</div>
-            </button>
-
-            <button onclick="runValidationCheck()" class="p-3 bg-white border border-neutral-300 hover:border-black rounded text-center transition-all shadow-sm">
-              <i class="fa-solid fa-circle-check text-lg mb-2 text-black"></i>
-              <div class="text-xs font-bold uppercase">Run Audit</div>
-            </button>
-          </div>
-        </div>
-
-        <!-- GRADE OVERVIEW MATRIX -->
-        <div class="p-4 md:p-6 rounded border border-neutral-300 bg-white shadow-sm">
-          <div class="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200">
-            <h3 class="text-sm font-bold uppercase tracking-wider">Grades 8–12 Coverage Matrix (25 Classes)</h3>
-            <span class="text-xs text-neutral-500 font-mono">5 Classes Per Grade Group</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="gradeCoverageMatrix">
-            <!-- Dynamically Rendered Grade Panels -->
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 2: INTERACTIVE TIMETABLE GRID -->
-      <div id="tab-timetable" class="tab-content hidden space-y-4">
-        <!-- FILTER BAR -->
-        <div class="p-4 rounded border border-neutral-300 bg-neutral-900 text-white flex flex-wrap items-center justify-between gap-4 no-print">
-          <div class="flex flex-wrap items-center gap-3 md:gap-4 w-full md:w-auto">
-            
-            <!-- Cycle Selection Toggle -->
-            <div>
-              <label class="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">Cycle Week</label>
-              <div class="inline-flex rounded-md shadow-sm" role="group">
-                <button type="button" id="gridCycleA" onclick="setGridCycle('A')" class="px-3 py-1.5 text-xs font-bold rounded-l-lg border border-neutral-700 bg-white text-black">
-                  Week A
-                </button>
-                <button type="button" id="gridCycleB" onclick="setGridCycle('B')" class="px-3 py-1.5 text-xs font-bold rounded-r-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white">
-                  Week B
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">View Mode</label>
-              <select id="gridType" class="bg-black text-white border border-neutral-700 text-xs rounded px-3 py-1.5 focus:outline-none" onchange="populateDropdowns(); renderGrid();">
-                <option value="class">Class Timetable</option>
-                <option value="teacher">Teacher Timetable</option>
-                <option value="room">Classroom / Lab Timetable</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">Select Target</label>
-              <select id="gridTarget" class="bg-black text-white border border-neutral-700 text-xs rounded px-3 py-1.5 focus:outline-none min-w-[140px]" onchange="renderGrid()">
-                <!-- Populated dynamically -->
-              </select>
-            </div>
-          </div>
-
-          <div class="flex items-center space-x-2">
-            <button onclick="window.print()" class="bg-white text-black hover:bg-neutral-200 text-xs font-bold px-3 py-1.5 rounded transition-colors border border-white uppercase">
-              <i class="fa-solid fa-print mr-1"></i> Print
-            </button>
-          </div>
-        </div>
-
-        <!-- PRINTABLE TIMETABLE CONTAINER -->
-        <div class="p-3 sm:p-6 bg-white border border-neutral-300 rounded shadow-sm printable-area">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 mb-4 border-b border-neutral-300 gap-2">
-            <div>
-              <div class="flex items-center space-x-2">
-                <h2 id="gridTitle" class="text-lg sm:text-xl font-black uppercase tracking-tight">CLASS TIMETABLE: 8A</h2>
-                <span id="gridCycleBadge" class="bg-black text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">WEEK A</span>
-              </div>
-              <p class="text-xs text-neutral-600">Sibabale Senior Secondary School • 2-Week Fortnightly Cycle</p>
-            </div>
-            <div class="text-left sm:text-right">
-              <span class="text-xs font-mono font-bold uppercase block text-neutral-800">80 PERIODS / 2-WEEK CYCLE</span>
-              <span class="text-[10px] text-neutral-500 uppercase">Mon - Fri (8 Periods/Day)</span>
-            </div>
-          </div>
-
-          <!-- TIMETABLE GRID TABLE (Mobile Horizontal Scrollable) -->
-          <div class="overflow-x-auto -mx-3 sm:mx-0">
-            <div class="inline-block min-w-full align-middle">
-              <table class="min-w-[650px] w-full border-collapse border border-neutral-300 text-center text-xs">
-                <thead>
-                  <tr class="bg-black text-white uppercase text-[11px] tracking-wider">
-                    <th class="border border-neutral-700 p-2 font-bold w-24">Period / Time</th>
-                    <th class="border border-neutral-700 p-2 font-bold">Monday</th>
-                    <th class="border border-neutral-700 p-2 font-bold">Tuesday</th>
-                    <th class="border border-neutral-700 p-2 font-bold">Wednesday</th>
-                    <th class="border border-neutral-700 p-2 font-bold">Thursday</th>
-                    <th class="border border-neutral-700 p-2 font-bold">Friday</th>
-                  </tr>
-                </thead>
-                <tbody id="timetableGridBody">
-                  <!-- Dynamically populated periods 1 through 8 + break intervals -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- FOOTER CREDIT ON PRINT/VIEW -->
-          <div class="mt-6 pt-4 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-neutral-500 font-mono gap-2">
-            <div>CONFIDENTIAL • SIBABALE SENIOR SECONDARY SCHOOL</div>
-            <div>CREATED BY MAWETHU MPANDE @SISONKEHUB</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 3: 25 CLASSES MANAGEMENT -->
-      <div id="tab-classes" class="tab-content hidden space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
-          <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Class Registry (25 Classes)</h2>
-            <p class="text-xs text-neutral-600">Grades 8, 9, 10, 11 & 12 • 5 Sections Per Grade (A–E)</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="classListing">
-          <!-- Class details dynamic cards -->
-        </div>
-      </div>
-
-      <!-- TAB 4: TEACHERS REGISTER -->
-      <div id="tab-teachers" class="tab-content hidden space-y-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-neutral-200 gap-3">
-          <div>
-            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Teacher Register & Workloads</h2>
-            <p class="text-xs text-neutral-600">32 Qualified Educators • Fortnightly Period Allocations</p>
-          </div>
-          <button onclick="openModal('addTeacherModal')" class="bg-black text-white hover:bg-neutral-800 text-xs font-bold px-4 py-2 rounded uppercase border border-black">
-            + Add New Teacher
+        <div class="flex items-center space-x-2">
+          <span class="text-[11px] text-slate-400 hidden lg:inline-block"><i class="fa-solid fa-hand-pointer mr-1"></i> Drag & drop cells to reorder</span>
+          <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+            <i class="fa-solid fa-print"></i>
+            <span>Print</span>
           </button>
         </div>
+      </div>
 
-        <div class="overflow-x-auto border border-neutral-300 rounded shadow-sm">
-          <table class="w-full text-left text-xs border-collapse min-w-[500px]">
+      <!-- TIMETABLE DISPLAY -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm printable-area space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div>
+            <h2 id="gridTitle" class="text-base font-bold text-slate-900">CLASS TIMETABLE: 8A</h2>
+            <p id="gridSubtitle" class="text-xs text-slate-500">Sibabale Secondary School • 2-Week Cycle</p>
+          </div>
+          <span id="gridCycleBadge" class="bg-indigo-100 text-indigo-700 font-bold text-xs px-3 py-1 rounded-full border border-indigo-200">WEEK A</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-center text-xs border-collapse">
             <thead>
-              <tr class="bg-black text-white uppercase text-[10px] tracking-wider font-bold">
-                <th class="p-3 border-b border-neutral-700">Code</th>
-                <th class="p-3 border-b border-neutral-700">Educator Name</th>
-                <th class="p-3 border-b border-neutral-700">Subjects</th>
-                <th class="p-3 border-b border-neutral-700">Grades</th>
-                <th class="p-3 border-b border-neutral-700 text-center">Max / Assigned (2-Wk)</th>
-                <th class="p-3 border-b border-neutral-700 text-center">Status</th>
+              <tr class="bg-slate-100 text-slate-700 font-bold">
+                <th class="p-2.5 border border-slate-200 w-24">Period</th>
+                <th class="p-2.5 border border-slate-200">Monday</th>
+                <th class="p-2.5 border border-slate-200">Tuesday</th>
+                <th class="p-2.5 border border-slate-200">Wednesday</th>
+                <th class="p-2.5 border border-slate-200">Thursday</th>
+                <th class="p-2.5 border border-slate-200">Friday</th>
               </tr>
             </thead>
-            <tbody id="teachersTableBody" class="divide-y divide-neutral-200 bg-white">
-              <!-- Rendered dynamically -->
+            <tbody id="timetableGridBody" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- TAB 5: SUBJECT MATRIX -->
-      <div id="tab-subjects" class="tab-content hidden space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
-          <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Subject Matrix & Periods</h2>
-            <p class="text-xs text-neutral-600">CAPS Curriculum Requirements • Fortnightly Period Targets</p>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto border border-neutral-300 rounded shadow-sm">
-          <table class="w-full text-left text-xs border-collapse min-w-[500px]">
-            <thead>
-              <tr class="bg-black text-white uppercase text-[10px] tracking-wider font-bold">
-                <th class="p-3 border-b border-neutral-700">Code</th>
-                <th class="p-3 border-b border-neutral-700">Subject Name</th>
-                <th class="p-3 border-b border-neutral-700">Phase / Grades</th>
-                <th class="p-3 border-b border-neutral-700 text-center">Fortnightly Periods</th>
-                <th class="p-3 border-b border-neutral-700 text-center">Special Room Req.</th>
-              </tr>
-            </thead>
-            <tbody id="subjectsTableBody" class="divide-y divide-neutral-200 bg-white">
-              <!-- Rendered dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB 6: CLASSROOMS & LABS -->
-      <div id="tab-rooms" class="tab-content hidden space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-neutral-200">
-          <div>
-            <h2 class="text-2xl font-black uppercase tracking-tight">Classrooms & Specialist Labs</h2>
-            <p class="text-xs text-neutral-600">Infrastructure Capacity & Equipment Tracking</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="roomsListing">
-          <!-- Dynamically populated room cards -->
-        </div>
-      </div>
-
-      <!-- TAB 7: CONFLICT AUDIT -->
-      <div id="tab-validation" class="tab-content hidden space-y-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-neutral-200 gap-3">
-          <div>
-            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Constraint & Conflict Audit</h2>
-            <p class="text-xs text-neutral-600">Real-time Validation Engine Across Both Week A & Week B</p>
-          </div>
-          <button onclick="runValidationCheck()" class="bg-black text-white hover:bg-neutral-800 text-xs font-bold px-4 py-2 rounded uppercase">
-            Re-Run Full Validation
-          </button>
-        </div>
-
-        <div id="validationResults" class="space-y-4">
-          <!-- Dynamic audit report cards -->
-        </div>
-      </div>
-
-      <!-- TAB 8: AI SCHEDULING ASSISTANT -->
-      <div id="tab-ai" class="tab-content hidden space-y-6">
-        <div class="pb-4 border-b border-neutral-200">
-          <h2 class="text-2xl font-black uppercase tracking-tight">AI Timetable Assistant</h2>
-          <p class="text-xs text-neutral-600">Natural Language Operations & Workload Diagnostics</p>
-        </div>
-
-        <div class="border border-neutral-300 rounded bg-neutral-900 text-white flex flex-col h-[450px] md:h-[500px]">
-          <!-- CHAT LOG -->
-          <div id="aiChatLog" class="flex-1 p-4 overflow-y-auto space-y-4 text-xs font-mono">
-            <div class="p-3 rounded bg-neutral-800 border border-neutral-700 text-neutral-300">
-              <span class="font-bold text-white block mb-1">SYSTEM ASSISTANT READY:</span>
-              Welcome to Sibabale Smart Timetable Pro AI Helper. I support diagnostics across your 2-week cycle (Week A & Week B). How may I assist you with scheduling, room utilization, or educator workload balancing?
-            </div>
-          </div>
-
-          <!-- INPUT FORM -->
-          <div class="p-3 border-t border-neutral-800 bg-black flex gap-2">
-            <input type="text" id="aiQueryInput" onkeydown="if(event.key==='Enter') sendAIQuery()" placeholder="Ask e.g. 'Show teachers with highest workload' or 'Find clashes in Week A'..." class="flex-1 bg-neutral-900 text-white border border-neutral-700 rounded px-3 py-2 text-xs focus:outline-none focus:border-white">
-            <button onclick="sendAIQuery()" class="bg-white text-black font-bold text-xs px-4 py-2 rounded uppercase hover:bg-neutral-200">
-              Ask AI
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 9: VERSION HISTORY -->
-      <div id="tab-versions" class="tab-content hidden space-y-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-neutral-200 gap-3">
-          <div>
-            <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Version Control & Audit Trail</h2>
-            <p class="text-xs text-neutral-600">Schedule Draft Snapshots & Restore Points</p>
-          </div>
-          <button onclick="saveVersionSnapshot()" class="bg-black text-white hover:bg-neutral-800 text-xs font-bold px-4 py-2 rounded uppercase">
-            + Create New Snapshot
-          </button>
-        </div>
-
-        <div class="border border-neutral-300 rounded bg-white overflow-x-auto shadow-sm">
-          <table class="w-full text-left text-xs border-collapse min-w-[500px]">
-            <thead>
-              <tr class="bg-black text-white uppercase text-[10px] tracking-wider font-bold">
-                <th class="p-3">Version Tag</th>
-                <th class="p-3">Created Date</th>
-                <th class="p-3">Author / Role</th>
-                <th class="p-3">Description</th>
-                <th class="p-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="versionTableBody" class="divide-y divide-neutral-200">
-              <!-- Dynamically populated snapshots -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB 10: SCHOOL SETTINGS -->
-      <div id="tab-settings" class="tab-content hidden space-y-6">
-        <div class="pb-4 border-b border-neutral-200">
-          <h2 class="text-2xl font-black uppercase tracking-tight">School Operating Settings</h2>
-          <p class="text-xs text-neutral-600">Sibabale Senior Secondary School Parameters</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="p-6 rounded border border-neutral-300 bg-white shadow-sm space-y-4">
-            <h3 class="text-xs font-bold uppercase tracking-wider border-b border-neutral-200 pb-2">Institutional Info</h3>
-            <div>
-              <label class="block text-xs font-semibold mb-1">School Name</label>
-              <input type="text" value="Sibabale Senior Secondary School" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium bg-neutral-100" readonly>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1">Academic Cycle Structure</label>
-              <input type="text" value="2-Week Cycle (Week A & Week B)" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium bg-neutral-100" readonly>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1">Academic Year / Term</label>
-              <input type="text" value="2026 - Term 1" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1">System Author Credit</label>
-              <input type="text" value="MAWETHU MPANDE @SISONKEHUB" class="w-full border border-neutral-300 rounded p-2 text-xs font-mono bg-neutral-100 text-neutral-600" readonly>
-            </div>
-          </div>
-
-          <div class="p-6 rounded border border-neutral-300 bg-white shadow-sm space-y-4">
-            <h3 class="text-xs font-bold uppercase tracking-wider border-b border-neutral-200 pb-2">Period Structure</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-semibold mb-1">Periods Per Day</label>
-                <input type="number" value="8" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium" readonly>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold mb-1">Period Duration</label>
-                <input type="text" value="45 Minutes" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium" readonly>
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1">Morning Break Interval</label>
-              <input type="text" value="After Period 4 (11:00 - 11:30)" class="w-full border border-neutral-300 rounded p-2 text-xs font-medium" readonly>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
-
-  <!-- MODAL: ADD TEACHER -->
-  <div id="addTeacherModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-    <div class="bg-white border-2 border-black rounded-lg max-w-md w-full p-6 shadow-2xl space-y-4 text-black">
-      <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
-        <h3 class="font-black text-sm uppercase tracking-wide">Add Educator to Register</h3>
-        <button onclick="closeModal('addTeacherModal')" class="text-neutral-500 hover:text-black font-bold">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <form onsubmit="addNewTeacher(event)" class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold mb-1">Teacher Code (e.g. T33)</label>
-          <input type="text" id="newTeacherId" required placeholder="T33" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
-        </div>
-        <div>
-          <label class="block font-bold mb-1">Full Name & Title</label>
-          <input type="text" id="newTeacherName" required placeholder="Mr. A. Xaba" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
-        </div>
-        <div>
-          <label class="block font-bold mb-1">Primary Subject Code</label>
-          <select id="newTeacherSubject" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
-            <!-- Populated dynamically -->
-          </select>
-        </div>
-        <div>
-          <label class="block font-bold mb-1">Max 2-Week Periods Limit</label>
-          <input type="number" id="newTeacherMax" value="64" min="20" max="80" required class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
-        </div>
-
-        <div class="pt-3 border-t border-neutral-200 flex justify-end space-x-2">
-          <button type="button" onclick="closeModal('addTeacherModal')" class="bg-neutral-200 text-black font-bold px-3 py-2 rounded uppercase text-xs">
-            Cancel
-          </button>
-          <button type="submit" class="bg-black text-white font-bold px-4 py-2 rounded uppercase text-xs border border-black">
-            Save Educator
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <!-- MODAL: EDIT LESSON SLOT -->
-  <div id="editSlotModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-    <div class="bg-white border-2 border-black rounded-lg max-w-md w-full p-6 shadow-2xl space-y-4 text-black">
-      <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
-        <h3 class="font-black text-sm uppercase tracking-wide">Edit Timetable Slot</h3>
-        <button onclick="closeModal('editSlotModal')" class="text-neutral-500 hover:text-black font-bold">
+    <!-- TAB 2: ANALYTICS & WORKLOAD -->
+    <div id="tab-analytics" class="tab-content hidden space-y-6">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Analytics & Workload Optimization</h2>
+        <p class="text-xs text-slate-500">Real-time statistics on teaching load, period utilization, and facility allocation</p>
+      </div>
+
+      <!-- METRIC CARDS -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-slate-500 text-xs font-medium">Total Allocated Slots</div>
+          <div id="metricTotalAllocated" class="text-2xl font-bold text-indigo-600 mt-1">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Across Week A & B</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-slate-500 text-xs font-medium">Active Teachers</div>
+          <div id="metricActiveTeachers" class="text-2xl font-bold text-emerald-600 mt-1">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Assigned to classes</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-slate-500 text-xs font-medium">Lab Facility Usage</div>
+          <div id="metricLabUsage" class="text-2xl font-bold text-amber-600 mt-1">0%</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Science & CAT Labs</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-slate-500 text-xs font-medium">Active Clashes</div>
+          <div id="metricClashCount" class="text-2xl font-bold text-rose-600 mt-1">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Conflicts flagged</div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <h3 class="font-bold text-sm text-slate-800">Teacher Workload Distribution (Periods / 2 Weeks)</h3>
+          <div class="h-64">
+            <canvas id="chartTeacherWorkload"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <h3 class="font-bold text-sm text-slate-800">Subject Coverage Breakdown</h3>
+          <div class="h-64">
+            <canvas id="chartSubjectDistribution"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: TEACHERS REGISTER -->
+    <div id="tab-teachers" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Teachers Register & Availability</h2>
+          <p class="text-xs text-slate-500">Manage teaching staff, primary subjects, and availability constraints</p>
+        </div>
+        <button onclick="openModal('addTeacherModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
+          + Add Teacher
+        </button>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+            <tr>
+              <th class="p-3">Code</th>
+              <th class="p-3">Teacher Name</th>
+              <th class="p-3">Qualified Subjects</th>
+              <th class="p-3 text-center">Periods Assigned</th>
+              <th class="p-3 text-center">Availability Matrix</th>
+              <th class="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="teachersTableBody" class="divide-y divide-slate-200">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: CLASSES LIST -->
+    <div id="tab-classes" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Class Enrolment & Grades</h2>
+          <p class="text-xs text-slate-500">Select a class to jump into its full 2-week timetable schedule</p>
+        </div>
+        <button onclick="promptAddClass()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
+          + Add Class
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="classListing">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- TAB 5: SUBJECTS -->
+    <div id="tab-subjects" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Subjects & Requirements</h2>
+          <p class="text-xs text-slate-500">Configure subject allocations and laboratory facility dependencies</p>
+        </div>
+        <button onclick="promptAddSubject()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
+          + Add Subject
+        </button>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+            <tr>
+              <th class="p-3">Code</th>
+              <th class="p-3">Subject Name</th>
+              <th class="p-3 text-center">Periods / 2 Weeks</th>
+              <th class="p-3">Facility Requirement</th>
+              <th class="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="subjectsTableBody" class="divide-y divide-slate-200">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 6: VALIDATION AUDITOR -->
+    <div id="tab-validation" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Automated Clash & Constraint Auditor</h2>
+          <p class="text-xs text-slate-500">Scans for teacher double-bookings, room overlaps, and availability violations</p>
+        </div>
+        <button onclick="runValidationCheck()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg">
+          Run Full Audit
+        </button>
+      </div>
+
+      <div id="validationResults" class="space-y-3">
+        <!-- Dynamic audit reports -->
+      </div>
+    </div>
+
+    <!-- TAB 7: SETTINGS & BACKUP -->
+    <div id="tab-settings" class="tab-content hidden space-y-6">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">System Settings & Database Backups</h2>
+        <p class="text-xs text-slate-500">Configure physical rooms, export system backup files, or restore previous data</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Room Management -->
+        <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-sm text-slate-800">Rooms & Facilities</h3>
+            <button onclick="promptAddRoom()" class="bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-700">
+              + Add Room
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <tr>
+                  <th class="p-2">Room ID</th>
+                  <th class="p-2">Name</th>
+                  <th class="p-2 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="roomsTableBody" class="divide-y divide-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- School Settings & Database Import/Export -->
+        <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm space-y-4">
+          <h3 class="font-bold text-sm text-slate-800 border-b border-slate-100 pb-2">School & Data Management</h3>
+          
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-700">School Name</label>
+            <input type="text" id="settingSchoolName" value="Sibabale Secondary School" onchange="updateSchoolName(this.value)" class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 space-y-3">
+            <h4 class="font-bold text-xs text-slate-800">Backup & Restore (JSON)</h4>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="exportJSONBackup()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 shadow-xs">
+                <i class="fa-solid fa-file-export"></i>
+                <span>Download Backup (.json)</span>
+              </button>
+              <label class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 cursor-pointer shadow-xs">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Restore Backup</span>
+                <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 space-y-2">
+            <h4 class="font-bold text-xs text-rose-700">Danger Zone</h4>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="clearEntireTimetable()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Clear All Timetable Slots</span>
+              </button>
+              <button onclick="resetSystemToDefault()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs px-3.5 py-2 rounded-lg">
+                Reset All System Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: EDIT SLOT -->
+  <div id="editSlotModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h3 class="font-bold text-sm text-slate-900">Edit Slot Assignment</h3>
+        <button onclick="closeModal('editSlotModal')" class="text-slate-400 hover:text-slate-700 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <form id="slotEditForm" onsubmit="saveSlotChanges(event)" class="space-y-3 text-xs">
+      <form onsubmit="saveSlotChanges(event)" class="space-y-3 text-xs">
         <input type="hidden" id="modalCycle">
         <input type="hidden" id="modalDay">
         <input type="hidden" id="modalPeriod">
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold mb-1">Class</label>
-            <input type="text" id="modalClass" readonly class="w-full border border-neutral-300 rounded p-2 bg-neutral-100 font-mono font-bold">
+            <label class="block font-semibold text-slate-600 mb-1">Class</label>
+            <input type="text" id="modalClass" readonly class="w-full border border-slate-200 rounded-lg p-2 bg-slate-50 font-bold">
           </div>
           <div>
-            <label class="block font-bold mb-1">Cycle</label>
-            <input type="text" id="modalCycleLabel" readonly class="w-full border border-neutral-300 rounded p-2 bg-neutral-100 font-mono font-bold">
+            <label class="block font-semibold text-slate-600 mb-1">Cycle</label>
+            <input type="text" id="modalCycleLabel" readonly class="w-full border border-slate-200 rounded-lg p-2 bg-slate-50 font-bold">
           </div>
         </div>
 
         <div>
-          <label class="block font-bold mb-1">Subject</label>
-          <select id="modalSubject" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black" onchange="updateAvailableTeachersForSubject()">
-            <!-- Populated dynamically -->
-          </select>
+          <label class="block font-semibold text-slate-600 mb-1">Subject</label>
+          <select id="modalSubject" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-indigo-500" onchange="updateAvailableTeachersForSubject()"></select>
         </div>
 
         <div>
-          <label class="block font-bold mb-1">Teacher</label>
-          <select id="modalTeacher" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
-            <!-- Populated dynamically -->
-          </select>
+          <label class="block font-semibold text-slate-600 mb-1">Assigned Teacher</label>
+          <select id="modalTeacher" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-indigo-500"></select>
         </div>
 
         <div>
-          <label class="block font-bold mb-1">Classroom / Lab</label>
-          <select id="modalRoom" class="w-full border border-neutral-300 rounded p-2 bg-white focus:outline-none focus:border-black">
-            <!-- Populated dynamically -->
-          </select>
+          <label class="block font-semibold text-slate-600 mb-1">Room / Lab</label>
+          <select id="modalRoom" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-indigo-500"></select>
         </div>
 
-        <div class="pt-3 border-t border-neutral-200 flex justify-end space-x-2">
-          <button type="button" onclick="clearSlotAssignment()" class="bg-neutral-200 text-black hover:bg-neutral-300 font-bold px-3 py-2 rounded uppercase text-xs">
-            Clear Slot
-          </button>
-          <button type="submit" class="bg-black text-white hover:bg-neutral-800 font-bold px-4 py-2 rounded uppercase text-xs border border-black">
-            Save Changes
-          </button>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="clearSlotAssignment()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg">Clear</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg">Save</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: EXPORT OPTIONS -->
-  <div id="exportModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-    <div class="bg-white border-2 border-black rounded-lg max-w-md w-full p-6 shadow-2xl space-y-4 text-black">
-      <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
-        <h3 class="font-black text-sm uppercase tracking-wide">Export Microsoft Office Files</h3>
-        <button onclick="closeModal('exportModal')" class="text-neutral-500 hover:text-black font-bold">
+  <!-- MODAL: ADD TEACHER -->
+  <div id="addTeacherModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h3 class="font-bold text-sm text-slate-900">Add Teacher</h3>
+        <button onclick="closeModal('addTeacherModal')" class="text-slate-400 hover:text-slate-700 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <p class="text-xs text-neutral-600">
-        Generate fully formatted, genuine Microsoft Excel (.xlsx) workbooks or Microsoft Word (.docx) publications branded for Sibabale Senior Secondary School (2-Week Cycle included).
-      </p>
+      <form onsubmit="addNewTeacher(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Teacher ID Code (e.g. T09)</label>
+          <input type="text" id="newTeacherId" required placeholder="T09" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Teacher Full Name</label>
+          <input type="text" id="newTeacherName" required placeholder="Mr. A. Xaba" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Primary Teaching Subject</label>
+          <select id="newTeacherSubject" class="w-full border border-slate-300 rounded-lg p-2 focus:outline-none"></select>
+        </div>
 
-      <div class="space-y-3 pt-2">
-        <button onclick="exportToExcel()" class="w-full p-4 border border-black rounded hover:bg-neutral-100 flex items-center space-x-3 transition-colors text-left">
-          <i class="fa-solid fa-file-excel text-2xl text-black"></i>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('addTeacherModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg">Cancel</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg">Add Teacher</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TEACHER AVAILABILITY MATRIX -->
+  <div id="teacherAvailabilityModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-lg w-full p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div>
+          <h3 class="font-bold text-sm text-slate-900" id="availModalTeacherName">Teacher Availability</h3>
+          <p class="text-[11px] text-slate-500">Toggle periods to block out periods when teacher is off-site or unavailable</p>
+        </div>
+        <button onclick="closeModal('teacherAvailabilityModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-center text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-bold">
+              <th class="p-2 border border-slate-200">Period</th>
+              <th class="p-2 border border-slate-200">Mon</th>
+              <th class="p-2 border border-slate-200">Tue</th>
+              <th class="p-2 border border-slate-200">Wed</th>
+              <th class="p-2 border border-slate-200">Thu</th>
+              <th class="p-2 border border-slate-200">Fri</th>
+            </tr>
+          </thead>
+          <tbody id="availabilityMatrixBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeModal('teacherAvailabilityModal')" class="bg-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EXPORT -->
+  <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h3 class="font-bold text-sm text-slate-900">Export Timetable Data</h3>
+        <button onclick="closeModal('exportModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <button onclick="exportToExcel()" class="w-full p-3 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center space-x-3 text-left">
+          <i class="fa-solid fa-file-excel text-emerald-600 text-xl"></i>
           <div>
-            <div class="font-bold text-xs uppercase">Microsoft Excel Workbook (.xlsx)</div>
-            <div class="text-[10px] text-neutral-500">Includes Week A & Week B Worksheets for Master, Class & Teacher Timetables</div>
+            <div class="font-bold text-xs text-slate-800">Excel Workbook (.xlsx)</div>
+            <div class="text-[10px] text-slate-500">Includes Week A and Week B tabs</div>
           </div>
         </button>
 
-        <button onclick="exportToWord()" class="w-full p-4 border border-black rounded hover:bg-neutral-100 flex items-center space-x-3 transition-colors text-left">
-          <i class="fa-solid fa-file-word text-2xl text-black"></i>
+        <button onclick="exportToWord()" class="w-full p-3 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center space-x-3 text-left">
+          <i class="fa-solid fa-file-word text-blue-600 text-xl"></i>
           <div>
-            <div class="font-bold text-xs uppercase">Microsoft Word Publication (.docx)</div>
-            <div class="text-[10px] text-neutral-500">Includes Cover Page, Signatures & Printed Grids for Week A and Week B</div>
+            <div class="font-bold text-xs text-slate-800">Word Document (.docx)</div>
+            <div class="text-[10px] text-slate-500">Printable master layout</div>
           </div>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MAIN SCRIPT IMPLEMENTATION -->
-  <script>
-    /* ==========================================================================
-       1. DATA STRUCTURES & INITIALIZATION (25 CLASSES, 2-WEEK CYCLE DATA)
-       ========================================================================== */
+  <!-- FOOTER -->
+  <footer class="p-3 text-center text-xs text-slate-400 border-t border-slate-200 no-print">
+    Mawethu Mpande @SisonkeHub • Sibabale Smart Timetable Pro
+  </footer>
 
+  <!-- SCRIPT LOGIC -->
+  <script>
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     const PERIODS = [
       { id: 1, time: '08:00 - 08:45' },
       { id: 2, time: '08:45 - 09:30' },
       { id: 3, time: '09:30 - 10:15' },
       { id: 4, time: '10:15 - 11:00' },
-      { id: 'BREAK', time: '11:00 - 11:30', name: 'MORNING BREAK' },
+      { id: 'BREAK', time: '11:00 - 11:30', name: 'BREAK' },
       { id: 5, time: '11:30 - 12:15' },
       { id: 6, time: '12:15 - 13:00' },
       { id: 7, time: '13:00 - 13:45' },
       { id: 8, time: '13:45 - 14:30' }
     ];
 
-    // 25 Classes: Grades 8–12, A through E
-    const CLASSES = [
+    let schoolName = "Sibabale Secondary School";
+
+    let CLASSES = [
       '8A', '8B', '8C', '8D', '8E',
       '9A', '9B', '9C', '9D', '9E',
       '10A', '10B', '10C', '10D', '10E',
@@ -817,141 +600,784 @@
       '12A', '12B', '12C', '12D', '12E'
     ];
 
-    const SUBJECTS = [
-      { code: 'ENG', name: 'English Home Language', periods: 12, isLab: false, phase: 'FET & Senior' },
-      { code: 'XHO', name: 'isiXhosa First Add. Lang', periods: 10, isLab: false, phase: 'FET & Senior' },
-      { code: 'MATH', name: 'Mathematics', periods: 14, isLab: false, phase: 'FET & Senior' },
-      { code: 'MLIT', name: 'Mathematical Literacy', periods: 10, isLab: false, phase: 'FET' },
-      { code: 'PSCI', name: 'Physical Sciences', periods: 10, isLab: true, phase: 'FET' },
-      { code: 'LSCI', name: 'Life Sciences', periods: 10, isLab: true, phase: 'FET' },
-      { code: 'ACCT', name: 'Accounting', periods: 8, isLab: false, phase: 'FET' },
-      { code: 'BUSS', name: 'Business Studies', periods: 8, isLab: false, phase: 'FET' },
-      { code: 'CAT', name: 'Computer Appl. Tech', periods: 8, isLab: true, phase: 'FET & Senior' },
-      { code: 'LO', name: 'Life Orientation', periods: 4, isLab: false, phase: 'FET & Senior' },
-      { code: 'NSCI', name: 'Natural Sciences', periods: 8, isLab: true, phase: 'Senior' },
-      { code: 'SSCI', name: 'Social Sciences', periods: 6, isLab: false, phase: 'Senior' }
+    let SUBJECTS = [
+      { code: 'ENG', name: 'English', periods: 12, isLab: false },
+      { code: 'XHO', name: 'isiXhosa', periods: 10, isLab: false },
+      { code: 'MATH', name: 'Mathematics', periods: 14, isLab: false },
+      { code: 'PSCI', name: 'Physical Sciences', periods: 10, isLab: true },
+      { code: 'LSCI', name: 'Life Sciences', periods: 10, isLab: true },
+      { code: 'ACCT', name: 'Accounting', periods: 8, isLab: false },
+      { code: 'CAT', name: 'Computer Tech', periods: 8, isLab: true },
+      { code: 'LO', name: 'Life Orientation', periods: 4, isLab: false }
     ];
 
-    const ROOMS = [
-      { id: 'R101', name: 'Classroom 101', type: 'Standard', capacity: 40 },
-      { id: 'R102', name: 'Classroom 102', type: 'Standard', capacity: 40 },
-      { id: 'R103', name: 'Classroom 103', type: 'Standard', capacity: 40 },
-      { id: 'R104', name: 'Classroom 104', type: 'Standard', capacity: 40 },
-      { id: 'R105', name: 'Classroom 105', type: 'Standard', capacity: 40 },
-      { id: 'SLAB1', name: 'Science Lab 1', type: 'Lab', capacity: 35 },
-      { id: 'SLAB2', name: 'Science Lab 2', type: 'Lab', capacity: 35 },
-      { id: 'CLAB1', name: 'Computer Lab 1', type: 'Lab', capacity: 30 }
+    let ROOMS = [
+      { id: 'R101', name: 'Classroom 101' },
+      { id: 'R102', name: 'Classroom 102' },
+      { id: 'R103', name: 'Classroom 103' },
+      { id: 'SLAB1', name: 'Science Lab 1' },
+      { id: 'CLAB1', name: 'Computer Lab 1' }
     ];
 
-    // Initial Educator Roster
     let TEACHERS = [
-      { id: 'T01', name: 'Mr. N. Mbeki', subjects: ['MATH', 'MLIT'], maxPeriods: 64 },
-      { id: 'T02', name: 'Mrs. S. Dlamini', subjects: ['ENG'], maxPeriods: 64 },
-      { id: 'T03', name: 'Mr. L. Zungu', subjects: ['PSCI', 'NSCI'], maxPeriods: 60 },
-      { id: 'T04', name: 'Ms. A. Sisulu', subjects: ['XHO'], maxPeriods: 64 },
-      { id: 'T05', name: 'Mr. K. Ndlovu', subjects: ['ACCT', 'BUSS'], maxPeriods: 64 },
-      { id: 'T06', name: 'Mrs. T. Khumalo', subjects: ['LSCI', 'NSCI'], maxPeriods: 60 },
-      { id: 'T07', name: 'Mr. M. Mpande', subjects: ['CAT', 'MATH'], maxPeriods: 64 },
-      { id: 'T08', name: 'Ms. B. Botha', subjects: ['LO', 'SSCI'], maxPeriods: 60 },
-      { id: 'T09', name: 'Mr. J. Smith', subjects: ['ENG', 'XHO'], maxPeriods: 60 },
-      { id: 'T10', name: 'Mrs. R. Pillay', subjects: ['MATH'], maxPeriods: 64 }
+      { id: 'T01', name: 'Mr. N. Mbeki', subjects: ['MATH'], blockedSlots: [] },
+      { id: 'T02', name: 'Mrs. S. Dlamini', subjects: ['ENG'], blockedSlots: [] },
+      { id: 'T03', name: 'Mr. L. Zungu', subjects: ['PSCI'], blockedSlots: [] },
+      { id: 'T04', name: 'Ms. A. Sisulu', subjects: ['XHO'], blockedSlots: [] },
+      { id: 'T05', name: 'Mr. K. Ndlovu', subjects: ['ACCT'], blockedSlots: [] },
+      { id: 'T06', name: 'Mrs. T. Khumalo', subjects: ['LSCI'], blockedSlots: [] },
+      { id: 'T07', name: 'Mr. M. Mpande', subjects: ['CAT'], blockedSlots: [] },
+      { id: 'T08', name: 'Ms. B. Botha', subjects: ['LO'], blockedSlots: [] }
     ];
 
-    // Timetable State Key Format: `${cycle}_${className}_${day}_${periodId}` where cycle = 'A' or 'B'
     let timetableState = {};
-    let activeCycle = 'A'; // 'A' or 'B'
-    let activeRole = 'Timetable Manager';
-    let currentVersions = [];
+    let activeCycle = 'A';
+    let currentSelectedTeacherIdForAvail = null;
+    let dragSourceKey = null;
 
-    /* ==========================================================================
-       2. APP INITIALIZATION & SEEDING ENGINE FOR 2-WEEK CYCLE
-       ========================================================================== */
+    // Chart instances
+    let chartWorkloadInstance = null;
+    let chartSubjectInstance = null;
 
     window.onload = function() {
-      seedDefaultTimetable();
-      renderDashboardMatrix();
+      loadLocalStorageData();
+      if (Object.keys(timetableState).length === 0) {
+        seedDefaultTimetable();
+      }
       populateDropdowns();
       renderGrid();
       renderTeachersTable();
       renderSubjectsTable();
-      renderRoomsListing();
       renderClassesListing();
+      renderRoomsTable();
       runValidationCheck();
       populateAddTeacherSubjects();
+      renderAnalytics();
     };
 
-    function seedDefaultTimetable() {
-      ['A', 'B'].forEach(cycle => {
-        CLASSES.forEach(c => {
-          let isSenior = c.startsWith('8') || c.startsWith('9');
-          
-          // Slight shift in subject sequence for Week B to represent distinct fortnight scheduling
-          let classSubjects = isSenior ?
-            (cycle === 'A' ? ['ENG', 'XHO', 'MATH', 'NSCI', 'SSCI', 'CAT', 'LO'] : ['MATH', 'ENG', 'NSCI', 'XHO', 'LO', 'SSCI', 'CAT']) :
-            (cycle === 'A' ? ['ENG', 'XHO', 'MATH', 'PSCI', 'LSCI', 'ACCT', 'LO'] : ['MATH', 'PSCI', 'ENG', 'LSCI', 'ACCT', 'XHO', 'LO']);
-
-          DAYS.forEach(day => {
-            PERIODS.forEach(p => {
-              if (p.id === 'BREAK') return;
-
-              let offset = cycle === 'B' ? 2 : 0;
-              let subCode = classSubjects[(p.id + DAYS.indexOf(day) + offset) % classSubjects.length];
-              let eligibleTeachers = TEACHERS.filter(t => t.subjects.includes(subCode));
-              let teacher = eligibleTeachers.length > 0 ? eligibleTeachers[0] : TEACHERS[0];
-              let subObj = SUBJECTS.find(s => s.code === subCode);
-              let room = subObj && subObj.isLab ? ROOMS[5] : ROOMS[0];
-
-              let key = `${cycle}_${c}_${day}_${p.id}`;
-              timetableState[key] = {
-                subject: subCode,
-                teacherId: teacher.id,
-                roomId: room.id
-              };
-            });
-          });
-        });
-      });
+    // LOCAL STORAGE MANAGEMENT
+    function saveLocalStorageData() {
+      const payload = {
+        schoolName,
+        CLASSES,
+        SUBJECTS,
+        ROOMS,
+        TEACHERS,
+        timetableState
+      };
+      localStorage.setItem('sibabale_timetable_data', JSON.stringify(payload));
     }
 
-    /* ==========================================================================
-       3. INTERACTIVE TIMETABLE GRID RENDERING & CYCLE SWITCHING
-       ========================================================================== */
-
-    function setGlobalCycle(cycle) {
-      activeCycle = cycle;
-      
-      // Update Cycle buttons state
-      const btnA = document.getElementById('btnCycleA');
-      const btnB = document.getElementById('btnCycleB');
-      
-      if (cycle === 'A') {
-        btnA.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-white text-black border-white";
-        btnB.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white";
-      } else {
-        btnB.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-white text-black border-white";
-        btnA.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded text-xs font-bold uppercase border transition-all bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white";
+    function loadLocalStorageData() {
+      const data = localStorage.getItem('sibabale_timetable_data');
+      if (!data) return;
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.schoolName) {
+          schoolName = parsed.schoolName;
+          document.getElementById('settingSchoolName').value = schoolName;
+          document.getElementById('headerSchoolName').textContent = schoolName;
+        }
+        if (parsed.CLASSES) CLASSES = parsed.CLASSES;
+        if (parsed.SUBJECTS) SUBJECTS = parsed.SUBJECTS;
+        if (parsed.ROOMS) ROOMS = parsed.ROOMS;
+        if (parsed.TEACHERS) TEACHERS = parsed.TEACHERS;
+        if (parsed.timetableState) timetableState = parsed.timetableState;
+      } catch (e) {
+        console.error("Error loading local storage data:", e);
       }
+    }
 
-      setGridCycle(cycle);
-      showSystemAlert(`Active cycle switched to Week ${cycle}`, 'info');
+    function exportJSONBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+        schoolName, CLASSES, SUBJECTS, ROOMS, TEACHERS, timetableState
+      }, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Sibabale_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showSystemAlert("Backup file downloaded successfully!", "success");
+    }
+
+    function importJSONBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.CLASSES && parsed.TEACHERS) {
+            schoolName = parsed.schoolName || schoolName;
+            CLASSES = parsed.CLASSES;
+            SUBJECTS = parsed.SUBJECTS;
+            ROOMS = parsed.ROOMS;
+            TEACHERS = parsed.TEACHERS;
+            timetableState = parsed.timetableState || {};
+            saveLocalStorageData();
+            location.reload();
+          } else {
+            showSystemAlert("Invalid backup file format.", "error");
+          }
+        } catch (err) {
+          showSystemAlert("Failed to parse JSON file.", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function updateSchoolName(newName) {
+      schoolName = newName;
+      document.getElementById('headerSchoolName').textContent = newName;
+      saveLocalStorageData();
+      showSystemAlert('School name updated successfully', 'success');
     }
 
     function setGridCycle(cycle) {
       activeCycle = cycle;
-      const gridA = document.getElementById('gridCycleA');
-      const gridB = document.getElementById('gridCycleB');
-      const badge = document.getElementById('gridCycleBadge');
+      document.getElementById('gridCycleA').className = cycle === 'A' 
+        ? 'px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-xs' 
+        : 'px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900';
+      document.getElementById('gridCycleB').className = cycle === 'B' 
+        ? 'px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-xs' 
+        : 'px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900';
+      document.getElementById('gridCycleBadge').textContent = `WEEK ${cycle}`;
+      renderGrid();
+    }
 
-      if (cycle === 'A') {
-        gridA.className = "px-3 py-1.5 text-xs font-bold rounded-l-lg border border-neutral-700 bg-white text-black";
-        gridB.className = "px-3 py-1.5 text-xs font-bold rounded-r-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white";
-        badge.textContent = "WEEK A";
+    // CONSTRAINT-BASED SCHEDULER
+    function triggerConstraintAutoSchedule() {
+      timetableState = {};
+      const cycles = ['A', 'B'];
+
+      cycles.forEach(cycle => {
+        CLASSES.forEach(c => {
+          SUBJECTS.forEach(sub => {
+            const periodsPerWeek = Math.ceil(sub.periods / 2);
+            let scheduledCount = 0;
+
+            let suitableTeacher = TEACHERS.find(t => t.subjects.includes(sub.code));
+            let teacherId = suitableTeacher ? suitableTeacher.id : TEACHERS[0].id;
+
+            let suitableRoom = sub.isLab 
+              ? (ROOMS.find(r => r.id.includes('LAB')) || ROOMS[0]).id 
+              : (ROOMS.find(r => !r.id.includes('LAB')) || ROOMS[0]).id;
+
+            for (let day of DAYS) {
+              if (scheduledCount >= periodsPerWeek) break;
+
+              for (let p of PERIODS) {
+                if (p.id === 'BREAK') continue;
+                if (scheduledCount >= periodsPerWeek) break;
+
+                const key = `${cycle}_${c}_${day}_${p.id}`;
+                
+                // Check teacher double-booking
+                let teacherBusy = false;
+                CLASSES.forEach(otherC => {
+                  let existing = timetableState[`${cycle}_${otherC}_${day}_${p.id}`];
+                  if (existing && existing.teacherId === teacherId) teacherBusy = true;
+                });
+
+                // Check teacher availability matrix
+                let teacherObj = TEACHERS.find(t => t.id === teacherId);
+                let isBlocked = teacherObj && teacherObj.blockedSlots && teacherObj.blockedSlots.includes(`${day}_${p.id}`);
+
+                if (!timetableState[key] && !teacherBusy && !isBlocked) {
+                  timetableState[key] = {
+                    subject: sub.code,
+                    teacherId: teacherId,
+                    roomId: suitableRoom
+                  };
+                  scheduledCount++;
+                }
+              }
+            }
+          });
+        });
+      });
+
+      saveLocalStorageData();
+      renderGrid();
+      runValidationCheck();
+      renderAnalytics();
+      showSystemAlert('Smart constraint-based timetable generated!', 'success');
+    }
+
+    function seedDefaultTimetable() {
+      triggerConstraintAutoSchedule();
+    }
+
+    // GRID RENDER & DRAG DROP LOGIC
+    function renderGrid() {
+      const type = document.getElementById('gridType').value;
+      const target = document.getElementById('gridTarget').value || (type === 'class' ? CLASSES[0] : type === 'teacher' ? TEACHERS[0].id : ROOMS[0].id);
+      const gridTitle = document.getElementById('gridTitle');
+      const tbody = document.getElementById('timetableGridBody');
+
+      if (type === 'class') {
+        gridTitle.textContent = `CLASS TIMETABLE: ${target}`;
+      } else if (type === 'teacher') {
+        let tObj = TEACHERS.find(t => t.id === target);
+        gridTitle.textContent = `TEACHER MASTER SCHEDULE: ${tObj ? tObj.name : target}`;
       } else {
-        gridB.className = "px-3 py-1.5 text-xs font-bold rounded-r-lg border border-neutral-700 bg-white text-black";
-        gridA.className = "px-3 py-1.5 text-xs font-bold rounded-l-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white";
-        badge.textContent = "WEEK B";
+        let rObj = ROOMS.find(r => r.id === target);
+        gridTitle.textContent = `ROOM SCHEDULE: ${rObj ? rObj.name : target}`;
       }
 
+      tbody.innerHTML = '';
+
+      PERIODS.forEach(p => {
+        let tr = document.createElement('tr');
+
+        if (p.id === 'BREAK') {
+          tr.className = 'bg-slate-100 font-bold';
+          tr.innerHTML = `<td class="p-2.5 border border-slate-200">BREAK</td><td colSpan="5" class="p-2.5 border border-slate-200 text-slate-500 tracking-wider">MORNING BREAK RECESS</td>`;
+        } else {
+          let tdPeriod = document.createElement('td');
+          tdPeriod.className = 'p-2 border border-slate-200 font-bold bg-slate-50 text-[11px]';
+          tdPeriod.innerHTML = `P${p.id}<br><span class="text-[9px] text-slate-400 font-normal">${p.time}</span>`;
+          tr.appendChild(tdPeriod);
+
+          DAYS.forEach(day => {
+            let td = document.createElement('td');
+            td.className = 'p-2 border border-slate-200 transition-colors relative';
+
+            if (type === 'class') {
+              const cellKey = `${activeCycle}_${target}_${day}_${p.id}`;
+              let slot = timetableState[cellKey];
+              
+              if (slot && slot.subject) {
+                let tObj = TEACHERS.find(t => t.id === slot.teacherId);
+                td.className += ' bg-indigo-50/60 hover:bg-indigo-100/80 draggable-slot';
+                td.setAttribute('draggable', 'true');
+                td.innerHTML = `
+                  <div class="font-bold text-indigo-950">${slot.subject}</div>
+                  <div class="text-[10px] text-indigo-700 font-medium">${tObj ? tObj.name : ''}</div>
+                  <div class="text-[9px] text-slate-400">${slot.roomId || ''}</div>
+                `;
+
+                // Drag events
+                td.ondragstart = (e) => {
+                  dragSourceKey = cellKey;
+                  e.dataTransfer.setData('text/plain', cellKey);
+                };
+              } else {
+                td.className += ' hover:bg-slate-100/70';
+                td.innerHTML = `<span class="text-slate-300">-</span>`;
+              }
+
+              // Drop target handlers
+              td.ondragover = (e) => { e.preventDefault(); td.classList.add('drag-over'); };
+              td.ondragleave = () => { td.classList.remove('drag-over'); };
+              td.ondrop = (e) => {
+                e.preventDefault();
+                td.classList.remove('drag-over');
+                const srcKey = e.dataTransfer.getData('text/plain');
+                if (srcKey && srcKey !== cellKey) {
+                  // Swap slots
+                  const temp = timetableState[cellKey];
+                  timetableState[cellKey] = timetableState[srcKey];
+                  if (temp) timetableState[srcKey] = temp;
+                  else delete timetableState[srcKey];
+                  
+                  saveLocalStorageData();
+                  renderGrid();
+                  runValidationCheck();
+                  showSystemAlert("Slot moved successfully!", "info");
+                }
+              };
+
+              td.onclick = (e) => {
+                openEditSlotModal(activeCycle, target, day, p.id);
+              };
+
+            } else if (type === 'teacher') {
+              let foundClass = CLASSES.find(c => {
+                let s = timetableState[`${activeCycle}_${c}_${day}_${p.id}`];
+                return s && s.teacherId === target;
+              });
+
+              if (foundClass) {
+                let slot = timetableState[`${activeCycle}_${foundClass}_${day}_${p.id}`];
+                td.innerHTML = `
+                  <div class="font-bold text-slate-900">${slot.subject}</div>
+                  <div class="text-[10px] text-indigo-600 font-semibold">Class ${foundClass}</div>
+                `;
+              } else {
+                td.innerHTML = `<span class="text-slate-300">Free</span>`;
+              }
+            } else if (type === 'room') {
+              let foundClass = CLASSES.find(c => {
+                let s = timetableState[`${activeCycle}_${c}_${day}_${p.id}`];
+                return s && s.roomId === target;
+              });
+
+              if (foundClass) {
+                let slot = timetableState[`${activeCycle}_${foundClass}_${day}_${p.id}`];
+                td.innerHTML = `
+                  <div class="font-bold text-slate-900">${slot.subject}</div>
+                  <div class="text-[10px] text-indigo-600 font-semibold">Class ${foundClass}</div>
+                `;
+              } else {
+                td.innerHTML = `<span class="text-slate-300">Free</span>`;
+              }
+            }
+
+            tr.appendChild(td);
+          });
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ANALYTICS & CHARTS
+    function renderAnalytics() {
+      let totalAllocated = Object.keys(timetableState).length;
+      let activeTeachers = new Set();
+      let labSlots = 0;
+
+      Object.values(timetableState).forEach(slot => {
+        if (slot.teacherId) activeTeachers.add(slot.teacherId);
+        if (slot.roomId && slot.roomId.includes('LAB')) labSlots++;
+      });
+
+      document.getElementById('metricTotalAllocated').textContent = totalAllocated;
+      document.getElementById('metricActiveTeachers').textContent = activeTeachers.size;
+      document.getElementById('metricLabUsage').textContent = Math.round((labSlots / Math.max(1, totalAllocated)) * 100) + "%";
+
+      // Teacher Workload Chart
+      const teacherLabels = TEACHERS.map(t => t.name);
+      const teacherCounts = TEACHERS.map(t => {
+        return Object.values(timetableState).filter(s => s.teacherId === t.id).length;
+      });
+
+      const ctxWorkload = document.getElementById('chartTeacherWorkload').getContext('2d');
+      if (chartWorkloadInstance) chartWorkloadInstance.destroy();
+      chartWorkloadInstance = new Chart(ctxWorkload, {
+        type: 'bar',
+        data: {
+          labels: teacherLabels,
+          datasets: [{
+            label: 'Assigned Periods',
+            data: teacherCounts,
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // Subject Distribution Chart
+      const subjectLabels = SUBJECTS.map(s => s.code);
+      const subjectCounts = SUBJECTS.map(s => {
+        return Object.values(timetableState).filter(slot => slot.subject === s.code).length;
+      });
+
+      const ctxSubject = document.getElementById('chartSubjectDistribution').getContext('2d');
+      if (chartSubjectInstance) chartSubjectInstance.destroy();
+      chartSubjectInstance = new Chart(ctxSubject, {
+        type: 'doughnut',
+        data: {
+          labels: subjectLabels,
+          datasets: [{
+            data: subjectCounts,
+            backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // TEACHER AVAILABILITY MATRIX MODAL
+    function openTeacherAvailabilityModal(tId) {
+      currentSelectedTeacherIdForAvail = tId;
+      const tObj = TEACHERS.find(t => t.id === tId);
+      if (!tObj) return;
+
+      document.getElementById('availModalTeacherName').textContent = `Availability: ${tObj.name}`;
+      const tbody = document.getElementById('availabilityMatrixBody');
+      tbody.innerHTML = '';
+
+      PERIODS.forEach(p => {
+        if (p.id === 'BREAK') return;
+        let tr = document.createElement('tr');
+        tr.innerHTML = `<td class="p-2 border border-slate-200 font-bold bg-slate-50">P${p.id}</td>`;
+
+        DAYS.forEach(day => {
+          let td = document.createElement('td');
+          const slotKey = `${day}_${p.id}`;
+          const isBlocked = tObj.blockedSlots && tObj.blockedSlots.includes(slotKey);
+
+          td.className = `p-2 border border-slate-200 cursor-pointer font-bold text-xs transition-colors ${isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'}`;
+          td.textContent = isBlocked ? 'OFF' : 'AVAILABLE';
+
+          td.onclick = () => {
+            if (!tObj.blockedSlots) tObj.blockedSlots = [];
+            if (isBlocked) {
+              tObj.blockedSlots = tObj.blockedSlots.filter(s => s !== slotKey);
+            } else {
+              tObj.blockedSlots.push(slotKey);
+            }
+            saveLocalStorageData();
+            openTeacherAvailabilityModal(tId);
+            runValidationCheck();
+          };
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      openModal('teacherAvailabilityModal');
+    }
+
+    // VALIDATION AUDITOR
+    function runValidationCheck() {
+      let conflicts = [];
+
+      ['A', 'B'].forEach(cycle => {
+        DAYS.forEach(day => {
+          PERIODS.forEach(p => {
+            if (p.id === 'BREAK') return;
+
+            let teacherMap = {};
+            let roomMap = {};
+
+            CLASSES.forEach(c => {
+              let slot = timetableState[`${cycle}_${c}_${day}_${p.id}`];
+              if (slot) {
+                // Teacher clash
+                if (slot.teacherId) {
+                  if (teacherMap[slot.teacherId]) {
+                    conflicts.push(`Week ${cycle}: Teacher double-booking on ${day} P${p.id} (Classes ${c} & ${teacherMap[slot.teacherId]})`);
+                  } else {
+                    teacherMap[slot.teacherId] = c;
+                  }
+
+                  // Teacher blocked check
+                  let tObj = TEACHERS.find(t => t.id === slot.teacherId);
+                  if (tObj && tObj.blockedSlots && tObj.blockedSlots.includes(`${day}_${p.id}`)) {
+                    conflicts.push(`Week ${cycle}: ${tObj.name} scheduled on ${day} P${p.id} during blocked availability`);
+                  }
+                }
+
+                // Room clash
+                if (slot.roomId) {
+                  if (roomMap[slot.roomId]) {
+                    conflicts.push(`Week ${cycle}: Room overlap in ${slot.roomId} on ${day} P${p.id} (Classes ${c} & ${roomMap[slot.roomId]})`);
+                  } else {
+                    roomMap[slot.roomId] = c;
+                  }
+                }
+              }
+            });
+          });
+        });
+      });
+
+      document.getElementById('badgeConflictCount').textContent = conflicts.length;
+      document.getElementById('metricClashCount').textContent = conflicts.length;
+
+      const valContainer = document.getElementById('validationResults');
+      valContainer.innerHTML = '';
+
+      if (conflicts.length === 0) {
+        valContainer.innerHTML = `
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center space-x-3">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
+            <div>
+              <div class="font-bold">100% Conflict Free Schedule!</div>
+              <div class="text-[11px] text-emerald-700">No teacher double-bookings, room overlaps, or availability violations detected across Week A & Week B.</div>
+            </div>
+          </div>
+        `;
+      } else {
+        conflicts.forEach(msg => {
+          let div = document.createElement('div');
+          div.className = 'p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center space-x-2.5';
+          div.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i> <span>${msg}</span>`;
+          valContainer.appendChild(div);
+        });
+      }
+    }
+
+    // MODALS & HELPERS
+    function openEditSlotModal(cycle, className, day, periodId) {
+      document.getElementById('modalCycle').value = cycle;
+      document.getElementById('modalCycleLabel').value = `Week ${cycle}`;
+      document.getElementById('modalClass').value = className;
+      document.getElementById('modalDay').value = day;
+      document.getElementById('modalPeriod').value = periodId;
+
+      const subSelect = document.getElementById('modalSubject');
+      subSelect.innerHTML = '';
+      SUBJECTS.forEach(s => {
+        let opt = document.createElement('option');
+        opt.value = s.code;
+        opt.textContent = `${s.name} (${s.code})`;
+        subSelect.appendChild(opt);
+      });
+
+      const key = `${cycle}_${className}_${day}_${periodId}`;
+      const current = timetableState[key];
+      if (current) subSelect.value = current.subject;
+
+      updateAvailableTeachersForSubject();
+      openModal('editSlotModal');
+    }
+
+    function updateAvailableTeachersForSubject() {
+      const tSelect = document.getElementById('modalTeacher');
+      const rSelect = document.getElementById('modalRoom');
+
+      tSelect.innerHTML = '';
+      rSelect.innerHTML = '';
+
+      TEACHERS.forEach(t => {
+        let opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        tSelect.appendChild(opt);
+      });
+
+      ROOMS.forEach(r => {
+        let opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.name;
+        rSelect.appendChild(opt);
+      });
+    }
+
+    function saveSlotChanges(e) {
+      e.preventDefault();
+      const cycle = document.getElementById('modalCycle').value;
+      const c = document.getElementById('modalClass').value;
+      const day = document.getElementById('modalDay').value;
+      const p = document.getElementById('modalPeriod').value;
+
+      timetableState[`${cycle}_${c}_${day}_${p}`] = {
+        subject: document.getElementById('modalSubject').value,
+        teacherId: document.getElementById('modalTeacher').value,
+        roomId: document.getElementById('modalRoom').value
+      };
+
+      saveLocalStorageData();
+      closeModal('editSlotModal');
+      renderGrid();
+      runValidationCheck();
+      renderAnalytics();
+      showSystemAlert('Slot updated successfully!', 'success');
+    }
+
+    function clearSlotAssignment() {
+      const cycle = document.getElementById('modalCycle').value;
+      const c = document.getElementById('modalClass').value;
+      const day = document.getElementById('modalDay').value;
+      const p = document.getElementById('modalPeriod').value;
+
+      delete timetableState[`${cycle}_${c}_${day}_${p}`];
+
+      saveLocalStorageData();
+      closeModal('editSlotModal');
+      renderGrid();
+      runValidationCheck();
+      renderAnalytics();
+      showSystemAlert('Slot cleared.', 'info');
+    }
+
+    function renderTeachersTable() {
+      const tbody = document.getElementById('teachersTableBody');
+      tbody.innerHTML = '';
+      TEACHERS.forEach((t, idx) => {
+        let count = Object.values(timetableState).filter(s => s.teacherId === t.id).length;
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-slate-800">${t.id}</td>
+          <td class="p-3 font-semibold text-slate-900">${t.name}</td>
+          <td class="p-3 text-slate-600">${t.subjects.join(', ')}</td>
+          <td class="p-3 text-center font-bold text-indigo-600">${count} Periods</td>
+          <td class="p-3 text-center">
+            <button onclick="openTeacherAvailabilityModal('${t.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-md font-semibold">
+              <i class="fa-solid fa-clock-rotate-left mr-1"></i> Edit Hours
+            </button>
+          </td>
+          <td class="p-3 text-center">
+            <button onclick="deleteTeacher(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderSubjectsTable() {
+      const tbody = document.getElementById('subjectsTableBody');
+      tbody.innerHTML = '';
+      SUBJECTS.forEach((s, idx) => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-slate-800">${s.code}</td>
+          <td class="p-3 font-semibold text-slate-900">${s.name}</td>
+          <td class="p-3 text-center font-bold">${s.periods}</td>
+          <td class="p-3">${s.isLab ? '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Lab Facility Required</span>' : '<span class="text-slate-500">Standard Classroom</span>'}</td>
+          <td class="p-3 text-center">
+            <button onclick="deleteSubject(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderClassesListing() {
+      const container = document.getElementById('classListing');
+      container.innerHTML = '';
+      CLASSES.forEach(c => {
+        let div = document.createElement('div');
+        div.className = 'p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-500 hover:shadow-sm font-bold text-xs text-slate-800 transition-all flex items-center justify-between';
+        div.innerHTML = `
+          <span onclick="selectClassView('${c}')" class="cursor-pointer flex-1 text-left">Class ${c}</span>
+          <button onclick="deleteClass('${c}')" class="text-slate-400 hover:text-rose-600 ml-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+      document.getElementById('navClassCount').textContent = `Classes (${CLASSES.length})`;
+    }
+
+    function renderRoomsTable() {
+      const tbody = document.getElementById('roomsTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      ROOMS.forEach((r, idx) => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${r.id}</td>
+          <td class="p-2">${r.name}</td>
+          <td class="p-2 text-center">
+            <button onclick="deleteRoom(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function promptAddRoom() {
+      const id = prompt('Enter Room ID (e.g. R104 or SLAB2):');
+      if (!id) return;
+      const name = prompt('Enter Room Name (e.g. Science Lab 2):');
+      if (!name) return;
+
+      ROOMS.push({ id, name });
+      saveLocalStorageData();
+      renderRoomsTable();
+      populateDropdowns();
+      showSystemAlert(`Room ${name} added successfully!`, 'success');
+    }
+
+    function deleteRoom(idx) {
+      const deleted = ROOMS.splice(idx, 1);
+      saveLocalStorageData();
+      renderRoomsTable();
+      populateDropdowns();
+      showSystemAlert(`Room ${deleted[0]?.name || ''} deleted.`, 'info');
+    }
+
+    function promptAddClass() {
+      const className = prompt('Enter new Class Name (e.g. 12F):');
+      if (!className) return;
+
+      const trimmed = className.trim().toUpperCase();
+      if (CLASSES.includes(trimmed)) {
+        showSystemAlert('Class already exists!', 'error');
+        return;
+      }
+
+      CLASSES.push(trimmed);
+      saveLocalStorageData();
+      renderClassesListing();
+      populateDropdowns();
+      showSystemAlert(`Class ${trimmed} added successfully!`, 'success');
+    }
+
+    function deleteClass(className) {
+      CLASSES = CLASSES.filter(c => c !== className);
+      saveLocalStorageData();
+      renderClassesListing();
+      populateDropdowns();
+      renderGrid();
+      showSystemAlert(`Class ${className} deleted.`, 'info');
+    }
+
+    function promptAddSubject() {
+      const code = prompt('Enter Subject Code (e.g. HIST):');
+      if (!code) return;
+      const name = prompt('Enter Subject Name (e.g. History):');
+      if (!name) return;
+      const periods = parseInt(prompt('Enter Periods per 2-Weeks:', '8')) || 8;
+      const isLab = confirm('Does this subject require a Lab facility?');
+
+      SUBJECTS.push({ code: code.toUpperCase(), name, periods, isLab });
+      saveLocalStorageData();
+      renderSubjectsTable();
+      populateAddTeacherSubjects();
+      showSystemAlert(`Subject ${name} added!`, 'success');
+    }
+
+    function deleteSubject(idx) {
+      const deleted = SUBJECTS.splice(idx, 1);
+      saveLocalStorageData();
+      renderSubjectsTable();
+      populateAddTeacherSubjects();
+      showSystemAlert(`Subject ${deleted[0]?.name || ''} deleted.`, 'info');
+    }
+
+    function deleteTeacher(idx) {
+      const deleted = TEACHERS.splice(idx, 1);
+      saveLocalStorageData();
+      renderTeachersTable();
+      populateDropdowns();
+      runValidationCheck();
+      showSystemAlert(`Teacher ${deleted[0]?.name || ''} removed.`, 'info');
+    }
+
+    function clearEntireTimetable() {
+      if (!confirm("Are you sure you want to clear all timetable slots?")) return;
+      timetableState = {};
+      saveLocalStorageData();
+      renderGrid();
+      runValidationCheck();
+      renderAnalytics();
+      showSystemAlert('All timetable slots cleared.', 'info');
+    }
+
+    function resetSystemToDefault() {
+      if (!confirm("Reset all system data back to initial defaults?")) return;
+      localStorage.removeItem('sibabale_timetable_data');
+      location.reload();
+    }
+
+    function selectClassView(c) {
+      document.getElementById('gridType').value = 'class';
+      populateDropdowns();
+      document.getElementById('gridTarget').value = c;
+      switchTab('timetable');
       renderGrid();
     }
 
@@ -971,216 +1397,17 @@
         TEACHERS.forEach(t => {
           let opt = document.createElement('option');
           opt.value = t.id;
-          opt.textContent = `${t.name} (${t.id})`;
+          opt.textContent = t.name;
           targetSelect.appendChild(opt);
         });
       } else if (type === 'room') {
         ROOMS.forEach(r => {
           let opt = document.createElement('option');
           opt.value = r.id;
-          opt.textContent = `${r.name} (${r.type})`;
+          opt.textContent = r.name;
           targetSelect.appendChild(opt);
         });
       }
-    }
-
-    function renderGrid() {
-      const type = document.getElementById('gridType').value;
-      const target = document.getElementById('gridTarget').value || (type === 'class' ? '8A' : type === 'teacher' ? 'T01' : 'R101');
-      const gridTitle = document.getElementById('gridTitle');
-      const tbody = document.getElementById('timetableGridBody');
-
-      if (type === 'class') {
-        gridTitle.textContent = `CLASS TIMETABLE: ${target}`;
-      } else if (type === 'teacher') {
-        let tObj = TEACHERS.find(t => t.id === target);
-        gridTitle.textContent = `TEACHER SCHEDULE: ${tObj ? tObj.name : target}`;
-      } else {
-        let rObj = ROOMS.find(r => r.id === target);
-        gridTitle.textContent = `FACILITY UTILIZATION: ${rObj ? rObj.name : target}`;
-      }
-
-      tbody.innerHTML = '';
-
-      PERIODS.forEach(p => {
-        let tr = document.createElement('tr');
-        tr.className = p.id === 'BREAK' ? 'bg-neutral-100 font-bold border-y-2 border-black' : 'hover:bg-neutral-50';
-
-        // Period Column Header
-        let tdPeriod = document.createElement('td');
-        tdPeriod.className = 'border border-neutral-300 p-2 font-mono text-[10px] font-bold bg-neutral-50';
-        tdPeriod.innerHTML = p.id === 'BREAK' ? `BREAK` : `P${p.id}<br><span class="text-neutral-500 font-normal text-[9px]">${p.time}</span>`;
-        tr.appendChild(tdPeriod);
-
-        if (p.id === 'BREAK') {
-          let tdBreak = document.createElement('td');
-          tdBreak.colSpan = 5;
-          tdBreak.className = 'border border-neutral-300 p-2 text-center text-xs font-bold uppercase tracking-widest text-neutral-600';
-          tdBreak.textContent = 'MORNING BREAK & ASSEMBLY';
-          tr.appendChild(tdBreak);
-        } else {
-          DAYS.forEach(day => {
-            let td = document.createElement('td');
-            td.className = 'border border-neutral-300 p-2 text-left align-top hover:bg-neutral-100 cursor-pointer transition-colors relative min-h-[60px]';
-
-            if (type === 'class') {
-              let key = `${activeCycle}_${target}_${day}_${p.id}`;
-              let slot = timetableState[key];
-              if (slot && slot.subject) {
-                let tObj = TEACHERS.find(t => t.id === slot.teacherId);
-                td.innerHTML = `
-                  <div class="font-black text-xs">${slot.subject}</div>
-                  <div class="text-[10px] text-neutral-600 truncate">${tObj ? tObj.name : slot.teacherId}</div>
-                  <div class="text-[9px] font-mono text-neutral-400 mt-1">${slot.roomId}</div>
-                `;
-              } else {
-                td.innerHTML = `<span class="text-[10px] font-mono text-neutral-300 uppercase">Unassigned</span>`;
-              }
-              if (activeRole === 'Timetable Manager' || activeRole === 'Principal') {
-                td.onclick = () => openEditSlotModal(activeCycle, target, day, p.id);
-              }
-            } else if (type === 'teacher') {
-              let foundClass = null;
-              let foundSlot = null;
-              CLASSES.forEach(c => {
-                let key = `${activeCycle}_${c}_${day}_${p.id}`;
-                let s = timetableState[key];
-                if (s && s.teacherId === target) {
-                  foundClass = c;
-                  foundSlot = s;
-                }
-              });
-
-              if (foundClass) {
-                td.innerHTML = `
-                  <div class="font-black text-xs">${foundSlot.subject}</div>
-                  <div class="text-[10px] font-bold text-black uppercase">Class ${foundClass}</div>
-                  <div class="text-[9px] font-mono text-neutral-400 mt-1">${foundSlot.roomId}</div>
-                `;
-              } else {
-                td.innerHTML = `<span class="text-[10px] font-mono text-neutral-300 uppercase">FREE</span>`;
-              }
-            } else if (type === 'room') {
-              let foundClass = null;
-              let foundSlot = null;
-              CLASSES.forEach(c => {
-                let key = `${activeCycle}_${c}_${day}_${p.id}`;
-                let s = timetableState[key];
-                if (s && s.roomId === target) {
-                  foundClass = c;
-                  foundSlot = s;
-                }
-              });
-
-              if (foundClass) {
-                let tObj = TEACHERS.find(t => t.id === foundSlot.teacherId);
-                td.innerHTML = `
-                  <div class="font-black text-xs">${foundSlot.subject}</div>
-                  <div class="text-[10px] font-bold text-black uppercase">Class ${foundClass}</div>
-                  <div class="text-[9px] text-neutral-600 truncate">${tObj ? tObj.name : foundSlot.teacherId}</div>
-                `;
-              } else {
-                td.innerHTML = `<span class="text-[10px] font-mono text-neutral-300 uppercase">AVAILABLE</span>`;
-              }
-            }
-
-            tr.appendChild(td);
-          });
-        }
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    /* ==========================================================================
-       4. MODAL EDITING LOGIC & MANUAL OVERRIDES
-       ========================================================================== */
-
-    function openEditSlotModal(cycle, className, day, periodId) {
-      document.getElementById('modalCycle').value = cycle;
-      document.getElementById('modalCycleLabel').value = `Week ${cycle}`;
-      document.getElementById('modalClass').value = className;
-      document.getElementById('modalDay').value = day;
-      document.getElementById('modalPeriod').value = periodId;
-
-      const subSelect = document.getElementById('modalSubject');
-      subSelect.innerHTML = '';
-      SUBJECTS.forEach(s => {
-        let opt = document.createElement('option');
-        opt.value = s.code;
-        opt.textContent = `${s.name} (${s.code})`;
-        subSelect.appendChild(opt);
-      });
-
-      const key = `${cycle}_${className}_${day}_${periodId}`;
-      const current = timetableState[key];
-      if (current) {
-        subSelect.value = current.subject;
-      }
-
-      updateAvailableTeachersForSubject();
-      openModal('editSlotModal');
-    }
-
-    function updateAvailableTeachersForSubject() {
-      const subCode = document.getElementById('modalSubject').value;
-      const tSelect = document.getElementById('modalTeacher');
-      const rSelect = document.getElementById('modalRoom');
-
-      tSelect.innerHTML = '';
-      rSelect.innerHTML = '';
-
-      TEACHERS.forEach(t => {
-        let opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = `${t.name} ${t.subjects.includes(subCode) ? '(Qualified)' : ''}`;
-        tSelect.appendChild(opt);
-      });
-
-      ROOMS.forEach(r => {
-        let opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = `${r.name} (${r.type})`;
-        rSelect.appendChild(opt);
-      });
-    }
-
-    function saveSlotChanges(e) {
-      e.preventDefault();
-      const cycle = document.getElementById('modalCycle').value;
-      const c = document.getElementById('modalClass').value;
-      const day = document.getElementById('modalDay').value;
-      const p = document.getElementById('modalPeriod').value;
-      const sub = document.getElementById('modalSubject').value;
-      const teacher = document.getElementById('modalTeacher').value;
-      const room = document.getElementById('modalRoom').value;
-
-      const key = `${cycle}_${c}_${day}_${p}`;
-      timetableState[key] = {
-        subject: sub,
-        teacherId: teacher,
-        roomId: room
-      };
-
-      closeModal('editSlotModal');
-      renderGrid();
-      runValidationCheck();
-      showSystemAlert(`Slot updated for Week ${cycle}, Class ${c}.`, 'success');
-    }
-
-    function clearSlotAssignment() {
-      const cycle = document.getElementById('modalCycle').value;
-      const c = document.getElementById('modalClass').value;
-      const day = document.getElementById('modalDay').value;
-      const p = document.getElementById('modalPeriod').value;
-
-      const key = `${cycle}_${c}_${day}_${p}`;
-      delete timetableState[key];
-
-      closeModal('editSlotModal');
-      renderGrid();
-      runValidationCheck();
-      showSystemAlert('Slot assignment cleared.', 'info');
     }
 
     function populateAddTeacherSubjects() {
@@ -1190,7 +1417,7 @@
       SUBJECTS.forEach(s => {
         let opt = document.createElement('option');
         opt.value = s.code;
-        opt.textContent = `${s.name} (${s.code})`;
+        opt.textContent = s.name;
         sel.appendChild(opt);
       });
     }
@@ -1200,514 +1427,22 @@
       const id = document.getElementById('newTeacherId').value.trim();
       const name = document.getElementById('newTeacherName').value.trim();
       const subject = document.getElementById('newTeacherSubject').value;
-      const maxP = parseInt(document.getElementById('newTeacherMax').value) || 64;
 
       if (!id || !name) return;
 
-      TEACHERS.push({
-        id: id,
-        name: name,
-        subjects: [subject],
-        maxPeriods: maxP
-      });
-
+      TEACHERS.push({ id, name, subjects: [subject], blockedSlots: [] });
+      saveLocalStorageData();
       renderTeachersTable();
       populateDropdowns();
       closeModal('addTeacherModal');
-      showSystemAlert(`New educator ${name} added to register.`, 'success');
-    }
-
-    /* ==========================================================================
-       5. AUTOMATED SCHEDULING ENGINE (2-WEEK CYCLE SOLVER)
-       ========================================================================== */
-
-    function triggerAutoSchedule() {
-      showSystemAlert('Running 2-Week Cycle optimization solver for all 25 classes...', 'info');
-
-      setTimeout(() => {
-        seedDefaultTimetable();
-        renderGrid();
-        runValidationCheck();
-        renderDashboardMatrix();
-        showSystemAlert('2-Week Cycle Schedule (Week A & Week B) generated with 0 constraint conflicts!', 'success');
-      }, 600);
-    }
-
-    /* ==========================================================================
-       6. REAL-TIME AUDIT & VALIDATION ENGINE
-       ========================================================================== */
-
-    function runValidationCheck() {
-      let conflicts = [];
-
-      ['A', 'B'].forEach(cycle => {
-        DAYS.forEach(day => {
-          PERIODS.forEach(p => {
-            if (p.id === 'BREAK') return;
-
-            let teacherAssignments = {};
-            let roomAssignments = {};
-
-            CLASSES.forEach(c => {
-              let key = `${cycle}_${c}_${day}_${p.id}`;
-              let slot = timetableState[key];
-
-              if (slot && slot.teacherId) {
-                if (teacherAssignments[slot.teacherId]) {
-                  conflicts.push({
-                    type: 'Teacher Double-Booking',
-                    severity: 'HIGH',
-                    details: `Week ${cycle}: Teacher ${slot.teacherId} assigned to Class ${c} and Class ${teacherAssignments[slot.teacherId]} on ${day} Period ${p.id}`
-                  });
-                } else {
-                  teacherAssignments[slot.teacherId] = c;
-                }
-              }
-
-              if (slot && slot.roomId) {
-                if (roomAssignments[slot.roomId]) {
-                  conflicts.push({
-                    type: 'Classroom Double-Booking',
-                    severity: 'HIGH',
-                    details: `Week ${cycle}: Facility ${slot.roomId} assigned to Class ${c} and Class ${roomAssignments[slot.roomId]} on ${day} Period ${p.id}`
-                  });
-                } else {
-                  roomAssignments[slot.roomId] = c;
-                }
-              }
-            });
-          });
-        });
-      });
-
-      // Update Audit UI Badge
-      document.getElementById('badgeConflictCount').textContent = conflicts.length;
-      document.getElementById('metricConflicts').textContent = `${conflicts.length} Clashes`;
-
-      const valContainer = document.getElementById('validationResults');
-      valContainer.innerHTML = '';
-
-      if (conflicts.length === 0) {
-        valContainer.innerHTML = `
-          <div class="p-6 rounded border border-black bg-neutral-100 text-black flex items-center space-x-4">
-            <i class="fa-solid fa-circle-check text-2xl"></i>
-            <div>
-              <h4 class="font-bold text-sm uppercase">All Mandatory Fortnightly Constraints Satisfied</h4>
-              <p class="text-xs text-neutral-600">Zero teacher double-bookings or room clashes detected across Week A and Week B for all 25 classes.</p>
-            </div>
-          </div>
-        `;
-      } else {
-        conflicts.forEach(conf => {
-          let card = document.createElement('div');
-          card.className = 'p-4 rounded border border-black bg-white flex items-start space-x-3 shadow-sm';
-          card.innerHTML = `
-            <i class="fa-solid fa-triangle-exclamation text-lg mt-0.5"></i>
-            <div>
-              <div class="font-bold text-xs uppercase tracking-wider">${conf.type} [${conf.severity}]</div>
-              <div class="text-xs text-neutral-700 mt-0.5">${conf.details}</div>
-            </div>
-          `;
-          valContainer.appendChild(card);
-        });
-      }
-    }
-
-    /* ==========================================================================
-       7. UI RENDERING HELPERS (CLASSES, TEACHERS, ROOMS, DASHBOARD)
-       ========================================================================== */
-
-    function renderDashboardMatrix() {
-      const container = document.getElementById('gradeCoverageMatrix');
-      container.innerHTML = '';
-
-      const grades = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-
-      grades.forEach((g, idx) => {
-        let gradeNum = 8 + idx;
-        let gradeClasses = CLASSES.filter(c => c.startsWith(gradeNum.toString()));
-
-        let card = document.createElement('div');
-        card.className = 'p-4 rounded border border-neutral-300 bg-white space-y-2';
-        card.innerHTML = `
-          <div class="text-xs font-extrabold uppercase border-b border-neutral-200 pb-1 flex justify-between">
-            <span>${g}</span>
-            <span class="font-mono text-[10px] text-neutral-500">5 Groups</span>
-          </div>
-          <div class="space-y-1">
-            ${gradeClasses.map(c => `
-              <div class="flex items-center justify-between text-xs font-mono p-1 bg-neutral-50 rounded hover:bg-neutral-100 cursor-pointer" onclick="viewClassGrid('${c}')">
-                <span class="font-bold">${c}</span>
-                <span class="text-[10px] text-neutral-500">80 Pds/2Wk</span>
-              </div>
-            `).join('')}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function viewClassGrid(c) {
-      document.getElementById('gridType').value = 'class';
-      populateDropdowns();
-      document.getElementById('gridTarget').value = c;
-      switchTab('timetable');
-      renderGrid();
-    }
-
-    function renderTeachersTable() {
-      const tbody = document.getElementById('teachersTableBody');
-      tbody.innerHTML = '';
-
-      TEACHERS.forEach(t => {
-        let tr = document.createElement('tr');
-        tr.className = 'hover:bg-neutral-50';
-        tr.innerHTML = `
-          <td class="p-3 font-mono font-bold">${t.id}</td>
-          <td class="p-3 font-semibold">${t.name}</td>
-          <td class="p-3 font-mono text-[10px]">${t.subjects.join(', ')}</td>
-          <td class="p-3 text-[10px] text-neutral-600">Grades 8–12</td>
-          <td class="p-3 text-center font-mono font-bold">64 / ${t.maxPeriods}</td>
-          <td class="p-3 text-center">
-            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-black text-white">ACTIVE</span>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderSubjectsTable() {
-      const tbody = document.getElementById('subjectsTableBody');
-      tbody.innerHTML = '';
-
-      SUBJECTS.forEach(s => {
-        let tr = document.createElement('tr');
-        tr.className = 'hover:bg-neutral-50';
-        tr.innerHTML = `
-          <td class="p-3 font-mono font-bold">${s.code}</td>
-          <td class="p-3 font-semibold">${s.name}</td>
-          <td class="p-3 text-[10px] text-neutral-600">${s.phase}</td>
-          <td class="p-3 text-center font-mono font-bold">${s.periods}</td>
-          <td class="p-3 text-center font-mono">${s.isLab ? 'Lab Facility Required' : 'Standard Room'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderRoomsListing() {
-      const container = document.getElementById('roomsListing');
-      container.innerHTML = '';
-
-      ROOMS.forEach(r => {
-        let card = document.createElement('div');
-        card.className = 'p-4 rounded border border-neutral-300 bg-white space-y-2';
-        card.innerHTML = `
-          <div class="flex items-center justify-between border-b border-neutral-200 pb-2">
-            <span class="font-black text-sm uppercase">${r.name}</span>
-            <span class="text-[10px] font-mono px-2 py-0.5 bg-neutral-100 rounded border border-neutral-300 font-bold">${r.id}</span>
-          </div>
-          <div class="text-xs text-neutral-600 font-medium">Type: ${r.type}</div>
-          <div class="text-xs text-neutral-600 font-medium">Capacity: ${r.capacity} Learners</div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function renderClassesListing() {
-      const container = document.getElementById('classListing');
-      container.innerHTML = '';
-
-      CLASSES.forEach(c => {
-        let card = document.createElement('div');
-        card.className = 'p-4 rounded border border-neutral-300 bg-white flex items-center justify-between shadow-sm';
-        card.innerHTML = `
-          <div>
-            <div class="font-black text-base uppercase">Class ${c}</div>
-            <div class="text-xs text-neutral-500 font-mono">80 Scheduled Lessons / Fortnight</div>
-          </div>
-          <button onclick="viewClassGrid('${c}')" class="bg-black text-white hover:bg-neutral-800 text-[10px] font-bold px-3 py-1.5 rounded uppercase">
-            View Grid
-          </button>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    /* ==========================================================================
-       8. MICROSOFT EXCEL EXPORT (.XLSX ENGINE VIA EXCELJS)
-       ========================================================================== */
-
-    async function exportToExcel() {
-      showSystemAlert('Generating 2-Week Cycle Microsoft Excel (.xlsx) workbook...', 'info');
-
-      try {
-        const workbook = new ExcelJS.Workbook();
-        workbook.creator = 'MAWETHU MPANDE @SISONKEHUB';
-
-        // 1. Overview Sheet
-        const overviewSheet = workbook.addWorksheet('School Overview');
-        overviewSheet.addRow(['SIBABALE SENIOR SECONDARY SCHOOL']);
-        overviewSheet.addRow(['SMART TIMETABLE PRO - 2-WEEK CYCLE MASTER SCHEDULE']);
-        overviewSheet.addRow(['CREATED BY MAWETHU MPANDE @SISONKEHUB']);
-        overviewSheet.addRow([]);
-        overviewSheet.addRow(['Total Classes', '25 Classes (Grades 8-12)']);
-        overviewSheet.addRow(['Total Fortnightly Periods', '2,000 Lessons (Week A & Week B)']);
-        overviewSheet.addRow(['Validation Status', '100% Conflict-Free']);
-
-        overviewSheet.getRow(1).font = { bold: true, size: 16 };
-
-        // 2. Week A Sheet
-        const sheetA = workbook.addWorksheet('Week A Schedule');
-        sheetA.addRow(['Class', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Room']);
-        sheetA.getRow(1).font = { bold: true };
-
-        CLASSES.forEach(c => {
-          DAYS.forEach(day => {
-            PERIODS.forEach(p => {
-              if (p.id === 'BREAK') return;
-              let slot = timetableState[`A_${c}_${day}_${p.id}`];
-              if (slot) sheetA.addRow([c, day, `Period ${p.id}`, p.time, slot.subject, slot.teacherId, slot.roomId]);
-            });
-          });
-        });
-
-        // 3. Week B Sheet
-        const sheetB = workbook.addWorksheet('Week B Schedule');
-        sheetB.addRow(['Class', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Room']);
-        sheetB.getRow(1).font = { bold: true };
-
-        CLASSES.forEach(c => {
-          DAYS.forEach(day => {
-            PERIODS.forEach(p => {
-              if (p.id === 'BREAK') return;
-              let slot = timetableState[`B_${c}_${day}_${p.id}`];
-              if (slot) sheetB.addRow([c, day, `Period ${p.id}`, p.time, slot.subject, slot.teacherId, slot.roomId]);
-            });
-          });
-        });
-
-        // Export to Blob
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, 'Sibabale_Secondary_2WeekCycle_Timetable_2026.xlsx');
-
-        showSystemAlert('Excel Workbook exported successfully!', 'success');
-        closeModal('exportModal');
-      } catch (err) {
-        showSystemAlert('Error generating Excel file: ' + err.message, 'error');
-      }
-    }
-
-    /* ==========================================================================
-       9. MICROSOFT WORD EXPORT (.DOCX ENGINE VIA DOCX.JS)
-       ========================================================================== */
-
-    async function exportToWord() {
-      showSystemAlert('Generating Microsoft Word (.docx) publication document...', 'info');
-
-      try {
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
-
-        const doc = new Document({
-          sections: [{
-            properties: {},
-            children: [
-              new Paragraph({
-                text: "SIBABALE SENIOR SECONDARY SCHOOL",
-                heading: HeadingLevel.HEADING_1,
-                alignment: AlignmentType.CENTER
-              }),
-              new Paragraph({
-                text: "SMART TIMETABLE PRO • 2-WEEK CYCLE MASTER PUBLICATION",
-                alignment: AlignmentType.CENTER
-              }),
-              new Paragraph({ text: "" }),
-              new Paragraph({
-                children: [
-                  new TextRun({ text: "Created By: ", bold: true }),
-                  new TextRun({ text: "MAWETHU MPANDE @SISONKEHUB" })
-                ],
-                alignment: AlignmentType.CENTER
-              }),
-              new Paragraph({ text: "" }),
-
-              // Week A Table for Class 8A
-              new Paragraph({ text: "CLASS 8A - WEEK A SCHEDULE", heading: HeadingLevel.HEADING_2 }),
-              new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({ children: [new Paragraph({ text: "Period", bold: true })] }),
-                      ...DAYS.map(d => new TableCell({ children: [new Paragraph({ text: d, bold: true })] }))
-                    ]
-                  }),
-                  ...PERIODS.filter(p => p.id !== 'BREAK').map(p => {
-                    return new TableRow({
-                      children: [
-                        new TableCell({ children: [new Paragraph({ text: `P${p.id}` })] }),
-                        ...DAYS.map(day => {
-                          let slot = timetableState[`A_8A_${day}_${p.id}`];
-                          return new TableCell({ children: [new Paragraph({ text: slot ? slot.subject : '-' })] });
-                        })
-                      ]
-                    });
-                  })
-                ]
-              }),
-
-              new Paragraph({ text: "" }),
-
-              // Week B Table for Class 8A
-              new Paragraph({ text: "CLASS 8A - WEEK B SCHEDULE", heading: HeadingLevel.HEADING_2 }),
-              new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({ children: [new Paragraph({ text: "Period", bold: true })] }),
-                      ...DAYS.map(d => new TableCell({ children: [new Paragraph({ text: d, bold: true })] }))
-                    ]
-                  }),
-                  ...PERIODS.filter(p => p.id !== 'BREAK').map(p => {
-                    return new TableRow({
-                      children: [
-                        new TableCell({ children: [new Paragraph({ text: `P${p.id}` })] }),
-                        ...DAYS.map(day => {
-                          let slot = timetableState[`B_8A_${day}_${p.id}`];
-                          return new TableCell({ children: [new Paragraph({ text: slot ? slot.subject : '-' })] });
-                        })
-                      ]
-                    });
-                  })
-                ]
-              }),
-
-              new Paragraph({ text: "" }),
-              new Paragraph({ text: "APPROVAL & SIGNATURES", heading: HeadingLevel.HEADING_2 }),
-              new Paragraph({ text: "Principal Signature: _______________________      Date: ____________" }),
-              new Paragraph({ text: "Timetable Manager: ________________________      Date: ____________" })
-            ]
-          }]
-        });
-
-        const blob = await Packer.toBlob(doc);
-        saveAs(blob, "Sibabale_Secondary_2WeekCycle_Timetable.docx");
-
-        showSystemAlert('Word publication document exported successfully!', 'success');
-        closeModal('exportModal');
-      } catch (err) {
-        showSystemAlert('Error generating Word document: ' + err.message, 'error');
-      }
-    }
-
-    /* ==========================================================================
-       10. AI ASSISTANT SIMULATOR
-       ========================================================================== */
-
-    function sendAIQuery() {
-      const input = document.getElementById('aiQueryInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      const log = document.getElementById('aiChatLog');
-
-      let userDiv = document.createElement('div');
-      userDiv.className = 'p-3 rounded bg-neutral-900 border border-neutral-700 text-white text-right font-bold';
-      userDiv.textContent = `YOU: ${text}`;
-      log.appendChild(userDiv);
-
-      input.value = '';
-
-      setTimeout(() => {
-        let aiDiv = document.createElement('div');
-        aiDiv.className = 'p-3 rounded bg-neutral-800 border border-neutral-700 text-neutral-200';
-
-        let reply = "I have analyzed both Week A and Week B schedules. All 25 classes are fully scheduled with 0 fortnightly conflicts.";
-        if (text.toLowerCase().includes('teacher') || text.toLowerCase().includes('workload')) {
-          reply = "FORTNIGHTLY WORKLOAD REPORT: Mr. N. Mbeki and Mr. M. Mpande are allocated 64 periods across Week A and Week B within their maximum policy limit.";
-        } else if (text.toLowerCase().includes('room') || text.toLowerCase().includes('lab')) {
-          reply = "FACILITY REPORT: Science Lab 1 has optimal load across Week A and Week B. No overlapping room bookings detected.";
-        } else if (text.toLowerCase().includes('cycle') || text.toLowerCase().includes('week')) {
-          reply = "CYCLE ANALYSIS: Week A and Week B have an even distribution of 40 periods per class per week.";
-        }
-
-        aiDiv.innerHTML = `<span class="font-bold text-white block mb-1">AI ASSISTANT:</span> ${reply}`;
-        log.appendChild(aiDiv);
-        log.scrollTop = log.scrollHeight;
-      }, 350);
-    }
-
-    /* ==========================================================================
-       11. VERSION CONTROL SYSTEM
-       ========================================================================== */
-
-    function saveVersionSnapshot() {
-      let tag = `v2.${currentVersions.length + 1}`;
-      let date = new Date().toLocaleString();
-
-      currentVersions.push({
-        tag: tag,
-        date: date,
-        author: activeRole,
-        desc: 'Manual 2-Week Snapshot Saved'
-      });
-
-      renderVersionTable();
-      showSystemAlert(`Snapshot ${tag} saved successfully.`, 'success');
-    }
-
-    function renderVersionTable() {
-      const tbody = document.getElementById('versionTableBody');
-      tbody.innerHTML = '';
-
-      currentVersions.forEach((v, idx) => {
-        let tr = document.createElement('tr');
-        tr.className = 'hover:bg-neutral-50';
-        tr.innerHTML = `
-          <td class="p-3 font-mono font-bold">${v.tag}</td>
-          <td class="p-3 text-[10px] text-neutral-600">${v.date}</td>
-          <td class="p-3 font-semibold">${v.author}</td>
-          <td class="p-3 text-neutral-700">${v.desc}</td>
-          <td class="p-3 text-right">
-            <button onclick="restoreVersion(${idx})" class="bg-black text-white hover:bg-neutral-800 font-bold text-[10px] px-2 py-1 rounded uppercase">
-              Restore
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function restoreVersion(idx) {
-      showSystemAlert(`Restored timetable state from version ${currentVersions[idx].tag}`, 'info');
-    }
-
-    /* ==========================================================================
-       12. GENERAL APPLICATION UTILITIES
-       ========================================================================== */
-
-    function toggleSidebar(forceState) {
-      const sidebar = document.getElementById('mainSidebar');
-      const backdrop = document.getElementById('sidebarBackdrop');
-      
-      const isOpen = !sidebar.classList.contains('-translate-x-full');
-      const nextState = forceState !== undefined ? forceState : !isOpen;
-
-      if (nextState) {
-        sidebar.classList.remove('-translate-x-full');
-        backdrop.classList.remove('hidden');
-      } else {
-        sidebar.classList.add('-translate-x-full');
-        backdrop.classList.add('hidden');
-      }
+      showSystemAlert(`Teacher ${name} added!`, 'success');
     }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(el => {
-        el.classList.remove('bg-white', 'text-black');
-        el.classList.add('text-neutral-400', 'hover:text-white', 'hover:bg-neutral-900');
+        el.classList.remove('border-indigo-600', 'text-indigo-600');
+        el.classList.add('border-transparent', 'text-slate-600');
       });
 
       const activeTab = document.getElementById(`tab-${tabId}`);
@@ -1715,44 +1450,64 @@
 
       const activeNav = document.getElementById(`nav-${tabId}`);
       if (activeNav) {
-        activeNav.classList.remove('text-neutral-400', 'hover:text-white', 'hover:bg-neutral-900');
-        activeNav.classList.add('bg-white', 'text-black');
+        activeNav.classList.remove('border-transparent', 'text-slate-600');
+        activeNav.classList.add('border-indigo-600', 'text-indigo-600');
       }
 
-      // Close mobile drawer on tab switch
-      toggleSidebar(false);
+      if (tabId === 'analytics') renderAnalytics();
     }
 
-    function changeRole(role) {
-      activeRole = role;
-      showSystemAlert(`Active user role changed to ${role}`, 'info');
-      renderGrid();
-    }
+    async function exportToExcel() {
+      try {
+        const workbook = new ExcelJS.Workbook();
+        ['A', 'B'].forEach(cycle => {
+          const sheet = workbook.addWorksheet(`Week ${cycle}`);
+          sheet.addRow(['Class', 'Day', 'Period', 'Subject', 'Teacher ID', 'Room']);
 
-    function triggerApproval() {
-      if (activeRole !== 'Principal') {
-        showSystemAlert('Only the Principal is authorized to approve and publish timetables.', 'error');
-        return;
+          CLASSES.forEach(c => {
+            DAYS.forEach(day => {
+              PERIODS.forEach(p => {
+                if (p.id === 'BREAK') return;
+                let slot = timetableState[`${cycle}_${c}_${day}_${p.id}`];
+                if (slot) sheet.addRow([c, day, `P${p.id}`, slot.subject, slot.teacherId, slot.roomId]);
+              });
+            });
+          });
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), 'Sibabale_Timetable_Master.xlsx');
+        closeModal('exportModal');
+        showSystemAlert('Excel exported!', 'success');
+      } catch (err) {
+        showSystemAlert('Export failed', 'error');
       }
-      document.getElementById('statusLabel').textContent = 'PUBLISHED & APPROVED';
-      showSystemAlert('2-Week Cycle Timetable approved and published for Sibabale Senior Secondary School!', 'success');
     }
 
-    function showSystemAlert(message, type = 'info') {
+    async function exportToWord() {
+      try {
+        const { Document, Packer, Paragraph, TextRun } = docx;
+        const doc = new Document({
+          sections: [{
+            children: [
+              new Paragraph({ children: [new TextRun({ text: `${schoolName.toUpperCase()} MASTER TIMETABLE`, bold: true, size: 28 })] })
+            ]
+          }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, "Sibabale_Timetable_Master.docx");
+        closeModal('exportModal');
+        showSystemAlert('Word doc exported!', 'success');
+      } catch (err) {
+        showSystemAlert('Export failed', 'error');
+      }
+    }
+
+    function showSystemAlert(msg, type = 'info') {
       const alertBox = document.getElementById('systemAlert');
-      const body = document.getElementById('alertBody');
-      const icon = document.getElementById('alertIcon');
-
-      body.textContent = message;
+      document.getElementById('alertBody').textContent = msg;
       alertBox.classList.remove('hidden');
-
-      if (type === 'error') {
-        icon.className = 'fa-solid fa-triangle-exclamation text-lg';
-      } else if (type === 'success') {
-        icon.className = 'fa-solid fa-circle-check text-lg';
-      } else {
-        icon.className = 'fa-solid fa-circle-info text-lg';
-      }
     }
 
     function dismissAlert() {
