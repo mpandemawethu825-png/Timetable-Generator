@@ -24,22 +24,29 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f8fafc;
       color: #0f172a;
+      overflow-x: hidden;
     }
     
     @media print {
       .no-print { display: none !important; }
       body { background-color: white !important; }
-      .printable-area { border: none !important; box-shadow: none !important; }
+      .printable-area { border: none !important; box-shadow: none !important; padding: 0 !important; }
     }
 
     /* Drag & Drop Visual Styles */
     .draggable-slot {
       cursor: grab;
       user-select: none;
+      -webkit-user-select: none;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .draggable-slot:active {
@@ -52,100 +59,115 @@
       border: 2px dashed #4f46e5 !important;
     }
     
+    /* Smooth Touch Momentum Scrolling */
+    .smooth-scroll {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Hide scrollbar visually while keeping scrolling functional for mobile tabs */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     /* Subtle pulse animation for auto-generator button */
     @keyframes subtlePulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.03); }
+      50% { transform: scale(1.02); }
     }
     .pulse-btn {
       animation: subtlePulse 2.5s infinite;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white">
 
   <!-- TOP BAR -->
-  <header class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between shadow-md gap-2">
-    <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 bg-indigo-600 font-bold text-xl flex items-center justify-center rounded-lg shadow-sm text-white">
+  <header class="bg-slate-900 text-white px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between shadow-md gap-2.5 sticky top-0 z-30">
+    <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+      <div class="w-8 h-8 sm:w-9 sm:h-9 bg-indigo-600 font-bold text-lg sm:text-xl flex items-center justify-center rounded-lg shadow-sm text-white shrink-0">
         S
       </div>
-      <div>
-        <h1 id="headerSchoolName" class="font-bold text-base leading-tight">Sibabale Secondary School</h1>
-        <p class="text-xs text-slate-400">Smart Timetable Pro & Enterprise Manager</p>
+      <div class="min-w-0">
+        <h1 id="headerSchoolName" class="font-bold text-sm sm:text-base leading-tight truncate">Sibabale Secondary School</h1>
+        <p class="text-[10px] sm:text-xs text-slate-400 truncate">Smart Timetable Pro & Enterprise Manager</p>
       </div>
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex items-center space-x-2 no-print">
+    <div class="flex items-center space-x-1.5 sm:space-x-2 no-print w-full sm:w-auto justify-end">
       <!-- AUTO GENERATE TIMETABLE BUTTON -->
-      <button onclick="triggerConstraintAutoSchedule()" class="pulse-btn bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
+      <button onclick="triggerConstraintAutoSchedule()" class="pulse-btn flex-1 sm:flex-none justify-center min-h-[38px] bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
         <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
-        <span>Auto-Generate Timetable</span>
+        <span>Auto-Generate</span>
       </button>
 
       <!-- MANUAL BUILDER / EDIT BUTTON -->
-      <button onclick="openModal('manualGenerateModal')" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
+      <button onclick="openModal('manualGenerateModal')" class="flex-1 sm:flex-none justify-center min-h-[38px] bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold text-xs px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
         <i class="fa-solid fa-hand-pointer text-amber-200"></i>
-        <span>Manually Build / Edit Slot</span>
+        <span class="hidden xs:inline">Manual Build</span>
+        <span class="xs:hidden">Manual</span>
       </button>
 
-      <button onclick="openModal('exportModal')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
+      <button onclick="openModal('exportModal')" class="min-h-[38px] bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-semibold text-xs px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
         <i class="fa-solid fa-download text-slate-400"></i>
-        <span>Export</span>
+        <span class="hidden sm:inline">Export</span>
       </button>
     </div>
   </header>
 
   <!-- NAVIGATION TABS -->
-  <nav class="bg-white border-b border-slate-200 px-4 flex space-x-1 overflow-x-auto no-print shadow-xs">
-    <button onclick="switchTab('timetable')" id="nav-timetable" class="nav-btn border-b-2 border-indigo-600 text-indigo-600 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-calendar-days"></i>
+  <nav class="bg-white border-b border-slate-200 px-2 sm:px-4 flex space-x-1 sm:space-x-2 overflow-x-auto no-print shadow-xs smooth-scroll no-scrollbar sticky top-[57px] sm:top-[61px] z-20">
+    <button onclick="switchTab('timetable')" id="nav-timetable" class="nav-btn border-b-2 border-indigo-600 text-indigo-600 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-calendar-days text-xs"></i>
       <span>Timetable Grid</span>
     </button>
 
-    <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-chart-pie"></i>
-      <span>Analytics & Workload</span>
+    <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-chart-pie text-xs"></i>
+      <span>Analytics</span>
     </button>
 
-    <button onclick="switchTab('teachers')" id="nav-teachers" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-user-tie"></i>
+    <button onclick="switchTab('teachers')" id="nav-teachers" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-user-tie text-xs"></i>
       <span>Teachers</span>
     </button>
 
-    <button onclick="switchTab('classes')" id="nav-classes" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-school"></i>
+    <button onclick="switchTab('classes')" id="nav-classes" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-school text-xs"></i>
       <span id="navClassCount">Classes (25)</span>
     </button>
 
-    <button onclick="switchTab('subjects')" id="nav-subjects" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-book"></i>
+    <button onclick="switchTab('subjects')" id="nav-subjects" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-book text-xs"></i>
       <span>Subjects</span>
     </button>
 
-    <button onclick="switchTab('validation')" id="nav-validation" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-shield-halved"></i>
-      <span>Clash Auditor</span>
+    <button onclick="switchTab('validation')" id="nav-validation" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-shield-halved text-xs"></i>
+      <span>Auditor</span>
       <span id="badgeConflictCount" class="bg-slate-200 text-slate-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">0</span>
     </button>
 
-    <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-4 flex items-center space-x-2 whitespace-nowrap">
-      <i class="fa-solid fa-gear"></i>
-      <span>Settings & Backup</span>
+    <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-semibold text-xs py-3 px-3 sm:px-4 flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+      <i class="fa-solid fa-gear text-xs"></i>
+      <span>Settings</span>
     </button>
   </nav>
 
   <!-- MAIN CONTAINER -->
-  <main class="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-4">
+  <main class="flex-1 p-3 sm:p-4 md:p-6 max-w-7xl w-full mx-auto space-y-4">
 
     <!-- ALERT MESSAGE -->
-    <div id="systemAlert" class="hidden p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center justify-between shadow-xs">
+    <div id="systemAlert" class="hidden p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center justify-between shadow-xs transition-all">
       <div class="flex items-center space-x-2.5">
-        <i id="alertIcon" class="fa-solid fa-circle-info text-indigo-600 text-base"></i>
-        <span id="alertBody" class="font-medium">System message details...</span>
+        <i id="alertIcon" class="fa-solid fa-circle-info text-indigo-600 text-base shrink-0"></i>
+        <span id="alertBody" class="font-medium break-words">System message details...</span>
       </div>
-      <button onclick="dismissAlert()" class="text-indigo-400 hover:text-indigo-900 font-bold ml-2">
+      <button onclick="dismissAlert()" class="text-indigo-400 hover:text-indigo-900 font-bold ml-2 p-1">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -154,19 +176,19 @@
     <div id="tab-timetable" class="tab-content space-y-4">
       
       <!-- CONTROLS BAR -->
-      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3 no-print">
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 no-print">
         
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 items-center">
           <!-- Week Selector -->
-          <div class="flex items-center bg-slate-100 p-1 rounded-lg text-xs font-semibold">
-            <button id="gridCycleA" onclick="setGridCycle('A')" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-xs">Week A</button>
-            <button id="gridCycleB" onclick="setGridCycle('B')" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">Week B</button>
+          <div class="flex items-center justify-center bg-slate-100 p-1 rounded-lg text-xs font-semibold w-full">
+            <button id="gridCycleA" onclick="setGridCycle('A')" class="flex-1 py-1.5 rounded-md bg-white text-indigo-600 shadow-xs text-center">Week A</button>
+            <button id="gridCycleB" onclick="setGridCycle('B')" class="flex-1 py-1.5 rounded-md text-slate-600 hover:text-slate-900 text-center">Week B</button>
           </div>
 
           <!-- View Mode -->
-          <div class="flex items-center space-x-1">
-            <label class="text-xs font-medium text-slate-500">View By:</label>
-            <select id="gridType" class="bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500" onchange="populateDropdowns(); renderGrid();">
+          <div class="flex items-center space-x-1.5 w-full">
+            <label class="text-xs font-medium text-slate-500 shrink-0">View:</label>
+            <select id="gridType" class="w-full bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500" onchange="populateDropdowns(); renderGrid();">
               <option value="class">Class Timetable</option>
               <option value="teacher">Teacher Master Schedule</option>
               <option value="room">Room Allocation Schedule</option>
@@ -174,42 +196,42 @@
           </div>
 
           <!-- Target Selection -->
-          <div class="flex items-center space-x-1">
-            <label class="text-xs font-medium text-slate-500">Target:</label>
-            <select id="gridTarget" class="bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 min-w-[140px]" onchange="renderGrid()">
+          <div class="flex items-center space-x-1.5 w-full">
+            <label class="text-xs font-medium text-slate-500 shrink-0">Target:</label>
+            <select id="gridTarget" class="w-full bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500" onchange="renderGrid()">
               <!-- Populated dynamically -->
             </select>
           </div>
         </div>
 
-        <div class="flex items-center space-x-2">
-          <button onclick="triggerConstraintAutoSchedule()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+        <div class="flex items-center space-x-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 justify-end">
+          <button onclick="triggerConstraintAutoSchedule()" class="flex-1 sm:flex-none justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Auto Schedule All</span>
+            <span>Auto Schedule</span>
           </button>
-          <button onclick="openModal('manualGenerateModal')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+          <button onclick="openModal('manualGenerateModal')" class="flex-1 sm:flex-none justify-center bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
             <i class="fa-solid fa-pen-to-square"></i>
-            <span>Manual Slot Entry</span>
+            <span>Manual Slot</span>
           </button>
-          <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+          <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5">
             <i class="fa-solid fa-print"></i>
-            <span>Print</span>
+            <span class="hidden sm:inline">Print</span>
           </button>
         </div>
       </div>
 
       <!-- TIMETABLE DISPLAY -->
-      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm printable-area space-y-3">
-        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+      <div class="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm printable-area space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
           <div>
-            <h2 id="gridTitle" class="text-base font-bold text-slate-900">CLASS TIMETABLE: 8A</h2>
-            <p id="gridSubtitle" class="text-xs text-slate-500">Sibabale Secondary School • 2-Week Cycle</p>
+            <h2 id="gridTitle" class="text-sm sm:text-base font-bold text-slate-900">CLASS TIMETABLE: 8A</h2>
+            <p id="gridSubtitle" class="text-[11px] sm:text-xs text-slate-500">Sibabale Secondary School • 2-Week Cycle</p>
           </div>
-          <span id="gridCycleBadge" class="bg-indigo-100 text-indigo-700 font-bold text-xs px-3 py-1 rounded-full border border-indigo-200">WEEK A</span>
+          <span id="gridCycleBadge" class="bg-indigo-100 text-indigo-700 font-bold text-xs px-2.5 py-1 rounded-full border border-indigo-200">WEEK A</span>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-center text-xs border-collapse">
+        <div class="overflow-x-auto smooth-scroll -mx-3 sm:mx-0 px-3 sm:px-0">
+          <table class="w-full text-center text-xs border-collapse min-w-[640px]">
             <thead>
               <tr class="bg-slate-100 text-slate-700 font-bold">
                 <th class="p-2.5 border border-slate-200 w-24">Period</th>
@@ -229,48 +251,48 @@
     </div>
 
     <!-- TAB 2: ANALYTICS & WORKLOAD -->
-    <div id="tab-analytics" class="tab-content hidden space-y-6">
+    <div id="tab-analytics" class="tab-content hidden space-y-4 sm:space-y-6">
       <div>
-        <h2 class="text-lg font-bold text-slate-900">Analytics & Workload Optimization</h2>
+        <h2 class="text-base sm:text-lg font-bold text-slate-900">Analytics & Workload Optimization</h2>
         <p class="text-xs text-slate-500">Real-time statistics on teaching load, period utilization, and facility allocation</p>
       </div>
 
       <!-- METRIC CARDS -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
           <div class="text-slate-500 text-xs font-medium">Total Allocated Slots</div>
-          <div id="metricTotalAllocated" class="text-2xl font-bold text-indigo-600 mt-1">0</div>
+          <div id="metricTotalAllocated" class="text-xl sm:text-2xl font-bold text-indigo-600 mt-1">0</div>
           <div class="text-[10px] text-slate-400 mt-0.5">Across Week A & B</div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
           <div class="text-slate-500 text-xs font-medium">Active Teachers</div>
-          <div id="metricActiveTeachers" class="text-2xl font-bold text-emerald-600 mt-1">0</div>
+          <div id="metricActiveTeachers" class="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">0</div>
           <div class="text-[10px] text-slate-400 mt-0.5">Assigned to classes</div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
           <div class="text-slate-500 text-xs font-medium">Lab Facility Usage</div>
-          <div id="metricLabUsage" class="text-2xl font-bold text-amber-600 mt-1">0%</div>
+          <div id="metricLabUsage" class="text-xl sm:text-2xl font-bold text-amber-600 mt-1">0%</div>
           <div class="text-[10px] text-slate-400 mt-0.5">Science & CAT Labs</div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
           <div class="text-slate-500 text-xs font-medium">Active Clashes</div>
-          <div id="metricClashCount" class="text-2xl font-bold text-rose-600 mt-1">0</div>
+          <div id="metricClashCount" class="text-xl sm:text-2xl font-bold text-rose-600 mt-1">0</div>
           <div class="text-[10px] text-slate-400 mt-0.5">Conflicts flagged</div>
         </div>
       </div>
 
       <!-- CHARTS ROW -->
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-          <h3 class="font-bold text-sm text-slate-800">Teacher Workload Distribution (Periods / 2 Weeks)</h3>
-          <div class="h-64">
+      <div class="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <h3 class="font-bold text-xs sm:text-sm text-slate-800">Teacher Workload Distribution (Periods / 2 Weeks)</h3>
+          <div class="h-56 sm:h-64 relative">
             <canvas id="chartTeacherWorkload"></canvas>
           </div>
         </div>
 
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-          <h3 class="font-bold text-sm text-slate-800">Subject Coverage Breakdown</h3>
-          <div class="h-64">
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <h3 class="font-bold text-xs sm:text-sm text-slate-800">Subject Coverage Breakdown</h3>
+          <div class="h-56 sm:h-64 relative">
             <canvas id="chartSubjectDistribution"></canvas>
           </div>
         </div>
@@ -279,117 +301,121 @@
 
     <!-- TAB 3: TEACHERS REGISTER -->
     <div id="tab-teachers" class="tab-content hidden space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Teachers Register & Availability</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">Teachers Register & Availability</h2>
           <p class="text-xs text-slate-500">Manage teaching staff, primary subjects, and availability constraints</p>
         </div>
-        <button onclick="openModal('addTeacherModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
+        <button onclick="openModal('addTeacherModal')" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
           + Add Teacher
         </button>
       </div>
 
-      <div class="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-            <tr>
-              <th class="p-3">Code</th>
-              <th class="p-3">Teacher Name</th>
-              <th class="p-3">Qualified Subjects</th>
-              <th class="p-3 text-center">Periods Assigned</th>
-              <th class="p-3 text-center">Availability Matrix</th>
-              <th class="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="teachersTableBody" class="divide-y divide-slate-200">
-            <!-- Dynamically populated -->
-          </tbody>
-        </table>
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto smooth-scroll">
+          <table class="w-full text-left text-xs min-w-[550px]">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-3">Code</th>
+                <th class="p-3">Teacher Name</th>
+                <th class="p-3">Qualified Subjects</th>
+                <th class="p-3 text-center">Periods Assigned</th>
+                <th class="p-3 text-center">Availability Matrix</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="teachersTableBody" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- TAB 4: CLASSES LIST -->
     <div id="tab-classes" class="tab-content hidden space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Class Enrolment & Grades</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">Class Enrolment & Grades</h2>
           <p class="text-xs text-slate-500">Select a class to jump into its full 2-week timetable schedule</p>
         </div>
-        <button onclick="promptAddClass()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
+        <button onclick="promptAddClass()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
           + Add Class
         </button>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="classListing">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3" id="classListing">
         <!-- Dynamically populated -->
       </div>
     </div>
 
     <!-- TAB 5: SUBJECTS -->
     <div id="tab-subjects" class="tab-content hidden space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Subjects & Requirements</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">Subjects & Requirements</h2>
           <p class="text-xs text-slate-500">Configure subject allocations and laboratory facility dependencies</p>
         </div>
-        <button onclick="promptAddSubject()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
+        <button onclick="promptAddSubject()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg shadow-sm">
           + Add Subject
         </button>
       </div>
 
-      <div class="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-            <tr>
-              <th class="p-3">Code</th>
-              <th class="p-3">Subject Name</th>
-              <th class="p-3 text-center">Periods / 2 Weeks</th>
-              <th class="p-3">Facility Requirement</th>
-              <th class="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="subjectsTableBody" class="divide-y divide-slate-200">
-            <!-- Dynamically populated -->
-          </tbody>
-        </table>
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto smooth-scroll">
+          <table class="w-full text-left text-xs min-w-[500px]">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-3">Code</th>
+                <th class="p-3">Subject Name</th>
+                <th class="p-3 text-center">Periods / 2 Weeks</th>
+                <th class="p-3">Facility Requirement</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="subjectsTableBody" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- TAB 6: VALIDATION AUDITOR -->
     <div id="tab-validation" class="tab-content hidden space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Automated Clash & Constraint Auditor</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">Automated Clash & Constraint Auditor</h2>
           <p class="text-xs text-slate-500">Scans for teacher double-bookings, room overlaps, and availability violations</p>
         </div>
-        <button onclick="runValidationCheck()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg">
+        <button onclick="runValidationCheck()" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-semibold text-xs px-3.5 py-2 rounded-lg">
           Run Full Audit
         </button>
       </div>
 
-      <div id="validationResults" class="space-y-3">
+      <div id="validationResults" class="space-y-2.5">
         <!-- Dynamic audit reports -->
       </div>
     </div>
 
     <!-- TAB 7: SETTINGS & BACKUP -->
-    <div id="tab-settings" class="tab-content hidden space-y-6">
+    <div id="tab-settings" class="tab-content hidden space-y-4 sm:space-y-6">
       <div>
-        <h2 class="text-lg font-bold text-slate-900">System Settings & Database Backups</h2>
+        <h2 class="text-base sm:text-lg font-bold text-slate-900">System Settings & Database Backups</h2>
         <p class="text-xs text-slate-500">Configure physical rooms, export system backup files, or restore previous data</p>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-6">
+      <div class="grid md:grid-cols-2 gap-4 sm:gap-6">
         <!-- Room Management -->
-        <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm space-y-3">
+        <div class="bg-white p-3.5 sm:p-4 border border-slate-200 rounded-xl shadow-sm space-y-3">
           <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 class="font-bold text-sm text-slate-800">Rooms & Facilities</h3>
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800">Rooms & Facilities</h3>
             <button onclick="promptAddRoom()" class="bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-700">
               + Add Room
             </button>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left">
+          <div class="overflow-x-auto smooth-scroll">
+            <table class="w-full text-xs text-left min-w-[280px]">
               <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
                 <tr>
                   <th class="p-2">Room ID</th>
@@ -405,10 +431,10 @@
         </div>
 
         <!-- School Settings & Database Import/Export -->
-        <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm space-y-4">
-          <h3 class="font-bold text-sm text-slate-800 border-b border-slate-100 pb-2">School & Data Management</h3>
+        <div class="bg-white p-3.5 sm:p-4 border border-slate-200 rounded-xl shadow-sm space-y-4">
+          <h3 class="font-bold text-xs sm:text-sm text-slate-800 border-b border-slate-100 pb-2">School & Data Management</h3>
           
-          <div class="space-y-2">
+          <div class="space-y-1.5">
             <label class="block text-xs font-semibold text-slate-700">School Name</label>
             <input type="text" id="settingSchoolName" value="Sibabale Secondary School" onchange="updateSchoolName(this.value)" class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:outline-none focus:border-indigo-500">
           </div>
@@ -416,11 +442,11 @@
           <div class="pt-3 border-t border-slate-100 space-y-3">
             <h4 class="font-bold text-xs text-slate-800">Backup & Restore (JSON)</h4>
             <div class="flex flex-wrap gap-2">
-              <button onclick="exportJSONBackup()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 shadow-xs">
+              <button onclick="exportJSONBackup()" class="flex-1 min-h-[36px] justify-center bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 shadow-xs">
                 <i class="fa-solid fa-file-export"></i>
                 <span>Download Backup (.json)</span>
               </button>
-              <label class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 cursor-pointer shadow-xs">
+              <label class="flex-1 min-h-[36px] justify-center bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 cursor-pointer shadow-xs">
                 <i class="fa-solid fa-file-import"></i>
                 <span>Restore Backup</span>
                 <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="importJSONBackup(event)">
@@ -431,11 +457,11 @@
           <div class="pt-3 border-t border-slate-100 space-y-2">
             <h4 class="font-bold text-xs text-rose-700">Danger Zone</h4>
             <div class="flex flex-wrap gap-2">
-              <button onclick="clearEntireTimetable()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5">
+              <button onclick="clearEntireTimetable()" class="flex-1 sm:flex-none justify-center bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5">
                 <i class="fa-solid fa-trash-can"></i>
-                <span>Clear All Timetable Slots</span>
+                <span>Clear Slots</span>
               </button>
-              <button onclick="resetSystemToDefault()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs px-3.5 py-2 rounded-lg">
+              <button onclick="resetSystemToDefault()" class="flex-1 sm:flex-none justify-center bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs px-3.5 py-2 rounded-lg">
                 Reset All System Data
               </button>
             </div>
@@ -447,14 +473,14 @@
   </main>
 
   <!-- MODAL: MANUAL TIMETABLE GENERATION / SLOT BUILDER -->
-  <div id="manualGenerateModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-xl space-y-4">
+  <div id="manualGenerateModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-md w-full p-4 sm:p-5 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-hand-pointer text-amber-600"></i>
-          <h3 class="font-bold text-sm text-slate-900">Manual Slot Generation</h3>
+          <h3 class="font-bold text-xs sm:text-sm text-slate-900">Manual Slot Generation</h3>
         </div>
-        <button onclick="closeModal('manualGenerateModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+        <button onclick="closeModal('manualGenerateModal')" class="text-slate-400 hover:text-slate-700 p-1 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -518,7 +544,7 @@
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="closeModal('manualGenerateModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg">Cancel</button>
           <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded-lg shadow-sm">
-            <i class="fa-solid fa-plus mr-1"></i> Apply Manual Allocation
+            <i class="fa-solid fa-plus mr-1"></i> Apply Slot
           </button>
         </div>
       </form>
@@ -526,11 +552,11 @@
   </div>
 
   <!-- MODAL: EDIT SLOT -->
-  <div id="editSlotModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+  <div id="editSlotModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-sm w-full p-4 sm:p-5 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-        <h3 class="font-bold text-sm text-slate-900">Edit Slot Assignment</h3>
-        <button onclick="closeModal('editSlotModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+        <h3 class="font-bold text-xs sm:text-sm text-slate-900">Edit Slot Assignment</h3>
+        <button onclick="closeModal('editSlotModal')" class="text-slate-400 hover:text-slate-700 p-1 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -575,11 +601,11 @@
   </div>
 
   <!-- MODAL: ADD TEACHER -->
-  <div id="addTeacherModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+  <div id="addTeacherModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-sm w-full p-4 sm:p-5 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-        <h3 class="font-bold text-sm text-slate-900">Add Teacher</h3>
-        <button onclick="closeModal('addTeacherModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+        <h3 class="font-bold text-xs sm:text-sm text-slate-900">Add Teacher</h3>
+        <button onclick="closeModal('addTeacherModal')" class="text-slate-400 hover:text-slate-700 p-1 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -607,20 +633,20 @@
   </div>
 
   <!-- MODAL: TEACHER AVAILABILITY MATRIX -->
-  <div id="teacherAvailabilityModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-lg w-full p-5 shadow-xl space-y-4">
+  <div id="teacherAvailabilityModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-lg w-full p-4 sm:p-5 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
         <div>
-          <h3 class="font-bold text-sm text-slate-900" id="availModalTeacherName">Teacher Availability</h3>
-          <p class="text-[11px] text-slate-500">Toggle periods to block out periods when teacher is off-site or unavailable</p>
+          <h3 class="font-bold text-xs sm:text-sm text-slate-900" id="availModalTeacherName">Teacher Availability</h3>
+          <p class="text-[10px] sm:text-[11px] text-slate-500">Toggle periods to block out periods when teacher is off-site or unavailable</p>
         </div>
-        <button onclick="closeModal('teacherAvailabilityModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+        <button onclick="closeModal('teacherAvailabilityModal')" class="text-slate-400 hover:text-slate-700 p-1 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-center text-xs border-collapse">
+      <div class="overflow-x-auto smooth-scroll">
+        <table class="w-full text-center text-xs border-collapse min-w-[340px]">
           <thead>
             <tr class="bg-slate-100 text-slate-700 font-bold">
               <th class="p-2 border border-slate-200">Period</th>
@@ -644,18 +670,18 @@
   </div>
 
   <!-- MODAL: EXPORT -->
-  <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+  <div id="exportModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-sm w-full p-4 sm:p-5 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-        <h3 class="font-bold text-sm text-slate-900">Export Timetable Data</h3>
-        <button onclick="closeModal('exportModal')" class="text-slate-400 hover:text-slate-700 font-bold">
+        <h3 class="font-bold text-xs sm:text-sm text-slate-900">Export Timetable Data</h3>
+        <button onclick="closeModal('exportModal')" class="text-slate-400 hover:text-slate-700 p-1 font-bold">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <div class="space-y-2">
         <button onclick="exportToExcel()" class="w-full p-3 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center space-x-3 text-left">
-          <i class="fa-solid fa-file-excel text-emerald-600 text-xl"></i>
+          <i class="fa-solid fa-file-excel text-emerald-600 text-xl shrink-0"></i>
           <div>
             <div class="font-bold text-xs text-slate-800">Excel Workbook (.xlsx)</div>
             <div class="text-[10px] text-slate-500">Includes Week A and Week B tabs</div>
@@ -663,7 +689,7 @@
         </button>
 
         <button onclick="exportToWord()" class="w-full p-3 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center space-x-3 text-left">
-          <i class="fa-solid fa-file-word text-blue-600 text-xl"></i>
+          <i class="fa-solid fa-file-word text-blue-600 text-xl shrink-0"></i>
           <div>
             <div class="font-bold text-xs text-slate-800">Word Document (.docx)</div>
             <div class="text-[10px] text-slate-500">Printable master layout</div>
@@ -674,7 +700,7 @@
   </div>
 
   <!-- FOOTER -->
-  <footer class="p-3 text-center text-xs text-slate-400 border-t border-slate-200 no-print">
+  <footer class="p-3 text-center text-[11px] sm:text-xs text-slate-400 border-t border-slate-200 no-print mt-auto">
     Mawethu Mpande @SisonkeHub • Sibabale Smart Timetable Pro
   </footer>
 
